@@ -7,7 +7,7 @@ import java.util.Scanner
 
 fun getInput(day: String): List<String> {
     val infile = File("advent2023-" + day.padStart(2, '0') + ".input.txt")
-    assertTrue(infile.absolutePath, infile.isFile)
+    assertTrue("File does not exist: " + infile.absolutePath, infile.isFile)
     return infile.readLines()
 }
 
@@ -66,22 +66,22 @@ class AdventOfCode2023 {
         }
         // Game 2: 2 green, 2 blue, 16 red; 14 red; 13 red, 13 green, 2 blue; 7 red, 7 green, 2 blue
         val games = input.map { line ->
-            val gameStrs = line.split(": ")
-            val roundsStrs = gameStrs[1].split("; ")
-            Game(
-                Scanner(gameStrs[0]).skip("Game ").nextInt(),
-                roundsStrs.map { roundStr ->
-                    val colors = roundStr.split(", ")
-                    fun getColor(name: String) = colors.find { it.contains(name) }?.let { Scanner(it).nextInt() } ?: 0
-                    Round(getColor("red"), getColor("green"), getColor("blue"))
-                }
-            )
+            val sc = Scanner(line)
+            val id = sc.skip("Game ").useDelimiter(": ").nextInt()
+            val rounds = sc.skip(": ").useDelimiter("; ").asSequence().map { roundStr ->
+                val colors = roundStr.split(", ")
+                fun getColor(name: String) = colors.find { it.contains(name) }?.let { Scanner(it).nextInt() } ?: 0
+                Round(getColor("red"), getColor("green"), getColor("blue"))
+            }
+            Game(id, rounds.toList())
         }
         val numbers = Round(12, 13, 14)
-        val idSums = games.filter { it.canMatch(numbers) }.sumOf { it.id }
-        println("Door 2.1: $idSums")
+        val idSum = games.filter { it.canMatch(numbers) }.sumOf { it.id }
+        println("Door 2.1: $idSum")
+        assertEquals(2283, idSum)
 
         val minCubeSum = games.sumOf { it.minimumPossible().cube() }
         println("Door 2.2: $minCubeSum")
+        assertEquals(78669, minCubeSum)
     }
 }
