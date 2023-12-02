@@ -66,9 +66,9 @@ class AdventOfCode2023 {
         }
         // Game 2: 2 green, 2 blue, 16 red; 14 red; 13 red, 13 green, 2 blue; 7 red, 7 green, 2 blue
         val games = input.map { line ->
-            val sc = Scanner(line)
-            val id = sc.skip("Game ").useDelimiter(": ").nextInt()
-            val rounds = sc.skip(": ").useDelimiter("; ").asSequence().map { roundStr ->
+            val sc = Scanner(line).useDelimiter("[:;] ")
+            val id = sc.skip("Game ").nextInt()
+            val rounds = sc.asSequence().map { roundStr ->
                 val colors = roundStr.split(", ")
                 fun getColor(name: String) = colors.find { it.contains(name) }?.let { Scanner(it).nextInt() } ?: 0
                 Round(getColor("red"), getColor("green"), getColor("blue"))
