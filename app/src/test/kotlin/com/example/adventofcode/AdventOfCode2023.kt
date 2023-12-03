@@ -55,13 +55,8 @@ class AdventOfCode2023 {
         }
         data class Game(val id: Int, val rounds: List<Round>) {
             fun canMatch(numbers: Round) = rounds.all { it.canMatch(numbers) }
-            fun minimumPossible(): Round = rounds.fold(Round(0, 0, 0)) {
-                acc, round ->
-                Round(
-                    maxOf(acc.red, round.red),
-                    maxOf(acc.green, round.green),
-                    maxOf(acc.blue, round.blue)
-                )
+            fun minimumPossible() = rounds.fold(Round(0, 0, 0)) { acc, round ->
+                Round(maxOf(acc.red, round.red), maxOf(acc.green, round.green), maxOf(acc.blue, round.blue))
             }
         }
         // Game 2: 2 green, 2 blue, 16 red; 14 red; 13 red, 13 green, 2 blue; 7 red, 7 green, 2 blue
@@ -70,8 +65,8 @@ class AdventOfCode2023 {
             val id = sc.skip("Game ").nextInt()
             val rounds = sc.asSequence().map { roundStr ->
                 val colors = roundStr.split(", ")
-                fun getColor(name: String) = colors.find { it.contains(name) }?.let { Scanner(it).nextInt() } ?: 0
-                Round(getColor("red"), getColor("green"), getColor("blue"))
+                fun getCount(name: String) = colors.find { it.contains(name) }?.let { Scanner(it).nextInt() } ?: 0
+                Round(getCount("red"), getCount("green"), getCount("blue"))
             }
             Game(id, rounds.toList())
         }
