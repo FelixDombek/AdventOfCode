@@ -10,7 +10,7 @@ import kotlin.system.measureTimeMillis
 class AdventOfCode2022 {
     @Test
     fun door01() {
-        val input = File("advent2022-01.input.txt")
+        val input = File("res/2022/01.txt")
         assertTrue(input.absolutePath, input.isFile)
 
         // part 1

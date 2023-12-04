@@ -9,14 +9,14 @@ import kotlin.math.min
 import kotlin.math.pow
 
 fun getInput(day: String): List<String> {
-    val infile = File("advent2023-${day.padStart(2, '0')}.input.txt")
+    val infile = File("res/2023/${day.padStart(2, '0')}.txt")
     assertTrue("File does not exist: " + infile.absolutePath, infile.isFile)
     return infile.readLines()
 }
 
 class AdventOfCode2023 {
     @Test
-    fun door01() {
+    fun day01() {
         val input = getInput("1")
         val sum = input.sumOf { line ->
             "${line.first { it.isDigit() }}${line.last { it.isDigit() }}".toInt()
@@ -52,7 +52,7 @@ class AdventOfCode2023 {
     }
 
     @Test
-    fun door02() {
+    fun day02() {
         val input = getInput("2")
         data class Round(val red: Int, val green: Int, val blue: Int) {
             fun canMatch(limits: Round) = red <= limits.red && green <= limits.green && blue <= limits.blue
@@ -86,7 +86,7 @@ class AdventOfCode2023 {
     }
 
     @Test
-    fun door3() {
+    fun day3() {
         val input = getInput("3")
         val sum = input.mapIndexed { lineNum, line ->
             Regex("\\d+").findAll(line).filter {
@@ -120,7 +120,7 @@ class AdventOfCode2023 {
     }
 
     @Test
-    fun door4() {
+    fun day4() {
         val input = getInput("4")
         val winCounts = input.map { line ->
             val sc = Scanner(line).useDelimiter("(Card\\s+\\d+: | \\| )")
