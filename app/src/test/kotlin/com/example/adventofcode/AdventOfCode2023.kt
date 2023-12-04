@@ -6,6 +6,7 @@ import java.io.File
 import java.util.Scanner
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.pow
 
 fun getInput(day: String): List<String> {
     val infile = File("advent2023-${day.padStart(2, '0')}.input.txt")
@@ -69,7 +70,7 @@ class AdventOfCode2023 {
             val id = sc.skip("Game ").nextInt()
             val rounds = sc.asSequence().map { roundStr ->
                 val colors = roundStr.split(", ")
-                fun getCount(name: String) = colors.find { it.contains(name) }?.let { Scanner(it).nextInt() } ?: 0
+                fun getCount(name: String) = colors.find { it.endsWith(name) }?.let { Scanner(it).nextInt() } ?: 0
                 Round(getCount("red"), getCount("green"), getCount("blue"))
             }
             Game(id, rounds.toList())
@@ -116,5 +117,27 @@ class AdventOfCode2023 {
         val gearSum = gears.filter { it.value.size == 2 }.map { it.value[0] * it.value[1] }.sum()
         println("Door 3.2: $gearSum")
         assertEquals(72246648, gearSum)
+    }
+
+    @Test
+    fun door4() {
+        val input = getInput("4")
+        val winCounts = input.map { line ->
+            val sc = Scanner(line).useDelimiter("(Card\\s+\\d+: | \\| )")
+            val winning = Scanner(sc.next()).asSequence().toList()
+            val mine = Scanner(sc.next()).asSequence()
+            mine.count { it in winning }
+        }
+        val sum = winCounts.sumOf { 2.0.pow((it - 1).toDouble()).toInt() }
+        println("Door 4.1: $sum")
+        assertEquals(25231, sum)
+
+        val counts = MutableList(input.size) { 1 }
+        winCounts.forEachIndexed { i, count ->
+            for (id in i + 1..i + count) counts[id] += counts[i]
+        }
+        val sum2 = counts.sum()
+        println("Door 4.2: $sum2")
+        assertEquals(9721255, sum2)
     }
 }
