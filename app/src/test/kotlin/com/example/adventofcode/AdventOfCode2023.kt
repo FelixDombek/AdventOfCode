@@ -98,6 +98,7 @@ class AdventOfCode2023 {
             }.sumOf { it.value.toInt() }
         }.sum()
         println("Door 3.1: $sum")
+        assertEquals(498559, sum)
 
         val gears = mutableMapOf<Pair<Int, Int>, MutableList<Int>>()
         input.forEachIndexed { lineNum, line ->
@@ -106,7 +107,6 @@ class AdventOfCode2023 {
                     for (j in max(it.range.first - 1, 0)..min(it.range.last + 1, input[lineNum].length - 1)) {
                         if (input[i][j] == '*') {
                             gears.putIfAbsent(i to j, mutableListOf())
-                            if (gears[i to j] == null) gears[i to j] = mutableListOf()
                             gears[i to j]!!.add(it.value.toInt())
                         }
                     }
@@ -115,5 +115,6 @@ class AdventOfCode2023 {
         }
         val gearSum = gears.filter { it.value.size == 2 }.map { it.value[0] * it.value[1] }.sum()
         println("Door 3.2: $gearSum")
+        assertEquals(72246648, gearSum)
     }
 }
