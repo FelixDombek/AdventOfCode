@@ -7,6 +7,7 @@ import java.util.Scanner
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
+import kotlin.system.measureTimeMillis
 
 
 fun getFile(day: String): File {
@@ -148,8 +149,7 @@ class AdventOfCode2023 {
     @Test
     fun day5() {
         val input = getString("5").split("\n\n")
-        val seedLine = input[0].split(" ").drop(1)
-        val seeds = seedLine.map { it.toLong() }
+        val seeds = input[0].split(" ").drop(1).map { it.toLong() }
         val maps = input.drop(1).map { mapBlock ->
             mapBlock.split("\n").drop(1).map { mapLine ->
                 val (to, from, len) = mapLine.split(" ").map { it.toLong() }
@@ -168,8 +168,13 @@ class AdventOfCode2023 {
         println("Day 5.1: $loc")
         assertEquals(600279879, loc)
 
-        val loc2 = seedLine.chunked(2) { (s, l) ->
-            mapSeeds((s.toLong()..<s.toLong()+l.toLong()).asSequence())
+        val loc2 = seeds.chunked(2) { (seed, len) -> // takes 12 mins, needs optimization
+            var m: Long
+            val millis = measureTimeMillis {
+                m = mapSeeds((seed..<seed + len).asSequence())
+            }
+            println("Day 5.2: $seed, len=$len took ${millis / 1000.0}s")
+            m
         }.min()
         println("Day 5.2: $loc2")
         assertEquals(20191102, loc2)
