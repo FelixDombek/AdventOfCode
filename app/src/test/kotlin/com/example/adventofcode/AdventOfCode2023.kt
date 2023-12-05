@@ -8,11 +8,15 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
 
-fun getInput(day: String): List<String> {
+
+fun getFile(day: String): File {
     val infile = File("res/2023/${day.padStart(2, '0')}.txt")
     assertTrue("File does not exist: " + infile.absolutePath, infile.isFile)
-    return infile.readLines()
+    return infile
 }
+fun getInput(day: String): List<String> = getFile(day).readLines()
+
+fun getString(day: String): String = getFile(day).readText()
 
 class AdventOfCode2023 {
     @Test
@@ -139,5 +143,35 @@ class AdventOfCode2023 {
         val sum2 = counts.sum()
         println("Day 4.2: $sum2")
         assertEquals(9721255, sum2)
+    }
+
+    @Test
+    fun day5() {
+        val input = getString("5").split("\n\n")
+        val seedLine = input[0].split(" ").drop(1)
+        val seeds = seedLine.map { it.toLong() }
+        val maps = input.drop(1).map { mapBlock ->
+            mapBlock.split("\n").drop(1).map { mapLine ->
+                val (to, from, len) = mapLine.split(" ").map { it.toLong() }
+                from..<(from + len) to (to - from)
+            }
+        }
+        fun mapSeeds(seeds: Sequence<Long>) = seeds.map { seed ->
+            fun useMap(item: Long, m: List<Pair<LongRange, Long>>): Long {
+                for (mapping in m) if (item in mapping.first) return item + mapping.second
+                return item
+            }
+            maps.fold(seed) { item, m -> useMap(item, m) }
+        }.min()
+
+        val loc = mapSeeds(seeds.asSequence())
+        println("Day 5.1: $loc")
+        assertEquals(600279879, loc)
+
+        val loc2 = seedLine.chunked(2) { (s, l) ->
+            mapSeeds((s.toLong()..<s.toLong()+l.toLong()).asSequence())
+        }.min()
+        println("Day 5.2: $loc2")
+        assertEquals(20191102, loc2)
     }
 }
