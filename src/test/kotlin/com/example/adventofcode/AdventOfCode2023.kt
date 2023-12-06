@@ -205,15 +205,15 @@ class AdventOfCode2023 {
     @Test
     fun day6() {
         val (times, dists) = getInput("6").map { Scanner(it).asSequence().drop(1).map { it.toInt() }.toList() }
-        val numWays =  times.zip(dists).map { (time, dist) ->
-                (1..<time).map { hold -> hold * (time - hold) }.filter { it > dist }.size
-            }.reduce { acc, elem -> acc * elem }
+        val numWays = times.zip(dists).map { (time, dist) ->
+            (1..<time).map { hold -> hold * (time - hold) }.count { it > dist }
+        }.reduce { acc, elem -> acc * elem }
         println("Day 6.1: $numWays")
         assertEquals(114400, numWays)
 
         val time = times.joinToString("").toLong()
         val dist = dists.joinToString("").toLong()
-        val numWays2 = (1..<time).asSequence().map { hold -> hold * (time - hold) }.filter { it > dist }.sumOf { 1L }
+        val numWays2 = (1..<time).asSequence().map { hold -> hold * (time - hold) }.count { it > dist }
         println("Day 6.2: $numWays2")
     }
 }
