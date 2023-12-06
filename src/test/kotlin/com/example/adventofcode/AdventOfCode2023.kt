@@ -7,8 +7,6 @@ import java.util.Scanner
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
-import kotlin.system.measureTimeMillis
-
 
 fun getFile(day: String): File {
     val infile = File("res/2023/${day.padStart(2, '0')}.txt")
@@ -168,13 +166,37 @@ class AdventOfCode2023 {
         println("Day 5.1: $loc")
         assertEquals(600279879, loc)
 
-        val loc2 = seeds.chunked(2) { (seed, len) -> // takes 12 mins, needs optimization
-            var m: Long
-            val millis = measureTimeMillis {
-                m = mapSeeds((seed..<seed + len).asSequence())
+        // naive: takes 12 minutes
+        //val loc2 = seeds.chunked(2) { (seed, len) ->
+        //    mapSeeds((seed..<seed + len).asSequence())
+        //}.min()
+
+        // optimized: takes 2 ms. 240000x speedup!
+        fun mapSeedsStepped(seeds: LongRange): Long {
+            fun useMap(item: Long, m: List<Pair<LongRange, Long>>): Pair<Long, Long> {
+                for (mapping in m) if (item in mapping.first) return item + mapping.second to mapping.first.last - item + 1
+                return item to m.fold(Long.MAX_VALUE) { len, mapping ->
+                    if (mapping.first.first > item) min(mapping.first.first - item, len) else len
+                }
             }
-            println("Day 5.2: $seed, len=$len took ${millis / 1000.0}s")
-            m
+            fun useMaps(seed: Long): Pair<Long, Long> =
+                maps.fold(seed to Long.MAX_VALUE) { (item, len), m ->
+                    val (newItem, newLen) = useMap(item, m)
+                    newItem to min(len, newLen)
+                }
+
+            var seed = seeds.first()
+            var minLoc = Long.MAX_VALUE
+            while (seed <= seeds.last()) {
+                val (newLoc, step) = useMaps(seed)
+                minLoc = min(newLoc, minLoc)
+                seed += step
+            }
+            return minLoc
+        }
+
+        val loc2 = seeds.chunked(2) { (seed, len) ->
+            mapSeedsStepped(seed..<seed + len)
         }.min()
         println("Day 5.2: $loc2")
         assertEquals(20191102, loc2)
