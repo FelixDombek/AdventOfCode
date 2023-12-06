@@ -201,4 +201,19 @@ class AdventOfCode2023 {
         println("Day 5.2: $loc2")
         assertEquals(20191102, loc2)
     }
+
+    @Test
+    fun day6() {
+        val (times, dists) = getInput("6").map { Scanner(it).asSequence().drop(1).map { it.toInt() }.toList() }
+        val numWays =  times.zip(dists).map { (time, dist) ->
+                (1..<time).map { hold -> hold * (time - hold) }.filter { it > dist }.size
+            }.reduce { acc, elem -> acc * elem }
+        println("Day 6.1: $numWays")
+        assertEquals(114400, numWays)
+
+        val time = times.joinToString("").toLong()
+        val dist = dists.joinToString("").toLong()
+        val numWays2 = (1..<time).asSequence().map { hold -> hold * (time - hold) }.filter { it > dist }.sumOf { 1L }
+        println("Day 6.2: $numWays2")
+    }
 }
