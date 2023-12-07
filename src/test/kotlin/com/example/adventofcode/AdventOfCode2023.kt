@@ -2,25 +2,15 @@ package com.example.adventofcode
 
 import org.junit.Assert.*
 import org.junit.Test
-import java.io.File
 import java.util.Scanner
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
 
-fun getFile(day: String): File {
-    val infile = File("res/2023/${day.padStart(2, '0')}.txt")
-    assertTrue("File does not exist: " + infile.absolutePath, infile.isFile)
-    return infile
-}
-fun getInput(day: String): List<String> = getFile(day).readLines()
-
-fun getString(day: String): String = getFile(day).readText()
-
-class AdventOfCode2023 {
+class AdventOfCode2023 : AdventBase(2023) {
     @Test
     fun day1() {
-        val input = getInput("1")
+        val input = getInput(1)
         val sum = input.sumOf { line ->
             "${line.first { it.isDigit() }}${line.last { it.isDigit() }}".toInt()
         }
@@ -56,7 +46,7 @@ class AdventOfCode2023 {
 
     @Test
     fun day2() {
-        val input = getInput("2")
+        val input = getInput(2)
         data class Round(val red: Int, val green: Int, val blue: Int) {
             fun canMatch(limits: Round) = red <= limits.red && green <= limits.green && blue <= limits.blue
             fun cube() = red * green * blue
@@ -90,7 +80,7 @@ class AdventOfCode2023 {
 
     @Test
     fun day3() {
-        val input = getInput("3")
+        val input = getInput(3)
         val sum = input.mapIndexed { lineNum, line ->
             Regex("\\d+").findAll(line).filter {
                 for (i in max(lineNum - 1, 0)..min(lineNum + 1, input.size - 1)) {
@@ -124,7 +114,7 @@ class AdventOfCode2023 {
 
     @Test
     fun day4() {
-        val input = getInput("4")
+        val input = getInput(4)
         val winCounts = input.map { line ->
             val sc = Scanner(line).useDelimiter("(Card\\s+\\d+: | \\| )")
             val winning = Scanner(sc.next()).asSequence().toList()
@@ -146,7 +136,7 @@ class AdventOfCode2023 {
 
     @Test
     fun day5() {
-        val input = getString("5").split("\n\n")
+        val input = getString(5).split("\n\n")
         val seeds = input[0].split(" ").drop(1).map { it.toLong() }
         val maps = input.drop(1).map { mapBlock ->
             mapBlock.split("\n").drop(1).map { mapLine ->
@@ -204,7 +194,7 @@ class AdventOfCode2023 {
 
     @Test
     fun day6() {
-        val (times, dists) = getInput("6").map { Scanner(it).asSequence().drop(1).map { it.toInt() }.toList() }
+        val (times, dists) = getInput(6).map { Scanner(it).asSequence().drop(1).map { it.toInt() }.toList() }
         val numWays = times.zip(dists).map { (time, dist) ->
             (1..<time).map { hold -> hold * (time - hold) }.count { it > dist }
         }.reduce { acc, elem -> acc * elem }
