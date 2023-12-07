@@ -66,13 +66,13 @@ class AdventOfCode2022 : AdventBase(2022) {
             val (a1, z1, a2, z2) = it.split(Regex("[-,]")).map { it.toInt() }
             a1..z1 contains a2..z2 || a2..z2 contains a1..z1
         }
-        println("2022.4.1: $count")
+        assertEquals("2022.4.1", 496, count)
 
         infix fun IntRange.overlaps(r: IntRange) = first in r || last in r
         val count2 = input.count {
             val (a1, z1, a2, z2) = it.split(Regex("[-,]")).map { it.toInt() }
             a1..z1 overlaps a2..z2 || a2..z2 overlaps a1..z1
         }
-        println("2022.4.2: $count2")
+        assertEquals("2022.4.1", 847, count2)
     }
 }
