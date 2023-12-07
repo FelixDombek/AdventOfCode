@@ -61,10 +61,10 @@ class AdventOfCode2022 : AdventBase(2022) {
     @Test
     fun day4() {
         val input = getInput(4)
-        infix fun IntRange.inRange(r: IntRange) = first in r && last in r
+        infix fun IntRange.contains(r: IntRange) = first in r && last in r
         val count = input.count {
             val (a1, z1, a2, z2) = it.split(Regex("[-,]")).map { it.toInt() }
-            a1..z1 inRange a2..z2 || a2..z2 inRange a1..z1
+            a1..z1 contains a2..z2 || a2..z2 contains a1..z1
         }
         println("2022.4.1: $count")
 
