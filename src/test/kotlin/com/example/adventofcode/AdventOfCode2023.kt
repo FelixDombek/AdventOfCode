@@ -14,8 +14,7 @@ class AdventOfCode2023 : AdventBase(2023) {
         val sum = input.sumOf { line ->
             "${line.first { it.isDigit() }}${line.last { it.isDigit() }}".toInt()
         }
-        println("Day 1.1: $sum")
-        assertEquals(54877, sum)
+        assertEquals("Day 1.1", 54877, sum)
 
         val sum2 = input.sumOf { line ->
             val re = Regex("one|two|three|four|five|six|seven|eight|nine|1|2|3|4|5|6|7|8|9")
@@ -40,8 +39,7 @@ class AdventOfCode2023 : AdventBase(2023) {
 
             "$digit1$digit2".toInt()
         }
-        println("Day 1.2: $sum2")
-        assertEquals(54100, sum2)
+        assertEquals("Day 1.2", 54100, sum2)
     }
 
     @Test
@@ -70,12 +68,10 @@ class AdventOfCode2023 : AdventBase(2023) {
         }
         val limits = Round(12, 13, 14)
         val idSum = games.filter { it.canMatch(limits) }.sumOf { it.id }
-        println("Day 2.1: $idSum")
-        assertEquals(2283, idSum)
+        assertEquals("Day 2.1", 2283, idSum)
 
         val minCubeSum = games.sumOf { it.minimumPossible().cube() }
-        println("Day 2.2: $minCubeSum")
-        assertEquals(78669, minCubeSum)
+        assertEquals("Day 2.2", 78669, minCubeSum)
     }
 
     @Test
@@ -91,8 +87,7 @@ class AdventOfCode2023 : AdventBase(2023) {
                 false
             }.sumOf { it.value.toInt() }
         }.sum()
-        println("Day 3.1: $sum")
-        assertEquals(498559, sum)
+        assertEquals("Day 3.1", 498559, sum)
 
         val gears = mutableMapOf<Pair<Int, Int>, MutableList<Int>>()
         input.forEachIndexed { lineNum, line ->
@@ -108,8 +103,7 @@ class AdventOfCode2023 : AdventBase(2023) {
             }
         }
         val gearSum = gears.filter { it.value.size == 2 }.map { it.value[0] * it.value[1] }.sum()
-        println("Day 3.2: $gearSum")
-        assertEquals(72246648, gearSum)
+        assertEquals("Day 3.2", 72246648, gearSum)
     }
 
     @Test
@@ -122,16 +116,14 @@ class AdventOfCode2023 : AdventBase(2023) {
             mine.count { it in winning }
         }
         val sum = winCounts.sumOf { 2.0.pow((it - 1).toDouble()).toInt() }
-        println("Day 4.1: $sum")
-        assertEquals(25231, sum)
+        assertEquals("Day 4.1", 25231, sum)
 
         val counts = MutableList(input.size) { 1 }
         winCounts.forEachIndexed { i, count ->
             for (id in i + 1..i + count) counts[id] += counts[i]
         }
         val sum2 = counts.sum()
-        println("Day 4.2: $sum2")
-        assertEquals(9721255, sum2)
+        assertEquals("Day 4.2", 9721255, sum2)
     }
 
     @Test
@@ -187,8 +179,7 @@ class AdventOfCode2023 : AdventBase(2023) {
         val loc2 = seeds.chunked(2) { (seed, len) ->
             mapSeedsStepped(seed..<seed + len)
         }.min()
-        println("Day 5.2: $loc2")
-        assertEquals(20191102, loc2)
+        assertEquals("Day 5.2", 20191102, loc2)
     }
 
     @Test
@@ -197,13 +188,12 @@ class AdventOfCode2023 : AdventBase(2023) {
         val numWays = times.zip(dists).map { (time, dist) ->
             (1..<time).map { hold -> hold * (time - hold) }.count { it > dist }
         }.reduce { acc, elem -> acc * elem }
-        println("Day 6.1: $numWays")
-        assertEquals(114400, numWays)
+        assertEquals("Day 6.1", 114400, numWays)
 
         val time = times.joinToString("").toLong()
         val dist = dists.joinToString("").toLong()
         val numWays2 = (1..<time).asSequence().map { hold -> hold * (time - hold) }.count { it > dist }
-        println("Day 6.2: $numWays2")
+        assertEquals("Day 6.2", 21039729, numWays2)
     }
 
     @Test
