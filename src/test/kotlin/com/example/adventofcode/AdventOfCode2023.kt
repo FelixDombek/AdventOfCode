@@ -2,6 +2,7 @@ package com.example.adventofcode
 
 import org.junit.Assert.*
 import org.junit.Test
+import java.io.File
 import java.util.Scanner
 import kotlin.math.max
 import kotlin.math.min
@@ -229,5 +230,30 @@ class AdventOfCode2023 : AdventBase(2023) {
 
         val win2 = winnings(input, false)
         assertEquals("Day 7.2", 250825971, win2)
+    }
+
+    @Test
+    fun day8() {
+        val (ops, graph) = getString(8).split("\n\n").map { it.lines() }.let { (ops, graph) ->
+            ops[0].map { if (it == 'L') 0 else 1 } to graph.map {
+                Regex("\\w+").findAll(it).map { it.value }.toList()
+            }.associate { (n, l, r) -> n to listOf(l, r) }
+        }
+        var count = 0
+        var node = "AAA"
+        while (node != "ZZZ") node = graph[node]!![ops[count++ % ops.size]]
+        assertEquals("Day 8.1", 17141, count)
+
+        var count2 = 0L
+        var nodes = graph.keys.filter { it.endsWith('A') }
+        val f = File("nodes")
+        f.writeText("")
+        while (!nodes.all { it.endsWith('Z') }) {
+            println("$count2 - $nodes")
+            f.appendText("$count2 - $nodes\n")
+            nodes = nodes.map { graph[it]!![ops[(count2 % ops.size).toInt()]] }
+            ++count2
+        }
+        assertEquals("Day 8.2", 17141, count2)
     }
 }
