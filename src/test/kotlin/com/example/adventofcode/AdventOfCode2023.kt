@@ -153,8 +153,7 @@ class AdventOfCode2023 : AdventBase(2023) {
         }.min()
 
         val loc = mapSeeds(seeds.asSequence())
-        println("Day 5.1: $loc")
-        assertEquals(600279879, loc)
+        assertEquals("Day 5.1", 600279879, loc)
 
         // naive: takes 12 minutes
         //val loc2 = seeds.chunked(2) { (seed, len) ->
@@ -205,5 +204,40 @@ class AdventOfCode2023 : AdventBase(2023) {
         val dist = dists.joinToString("").toLong()
         val numWays2 = (1..<time).asSequence().map { hold -> hold * (time - hold) }.count { it > dist }
         println("Day 6.2: $numWays2")
+    }
+
+    @Test
+    fun day7() {
+        val input = getInput(7)
+
+        fun type1(s: String) = s.asSequence().groupBy { it }
+            .let { (5 - it.size) * 10 + it.values.maxOf { it.size } }
+        fun type2(s: String) = s.replace("J", "").asSequence().groupBy { it }
+            .let { (5 - max(it.size, 1)) * 10 + (it.values.maxOfOrNull { it.size } ?: 0) + s.count { it == 'J' } }
+        fun type(s: String, r1: Boolean) = if (r1) type1(s) else type2(s)
+
+        fun value(s: String, r1: Boolean) = s.replace(Regex("[AKQJT]")) { when (it.value.first()) {
+                'T' -> "A"
+                'J' -> if (r1) "B" else "1"
+                'Q' -> "C"
+                'K' -> "D"
+                'A' -> "E"
+                else -> throw IllegalStateException("???")
+            } }.toInt(16)
+
+        fun strength(s: String, r1: Boolean) = (type(s, r1) shl 20) + value(s, r1)
+
+        fun winnings(ss: List<String>, r1: Boolean) = ss.map { it.split(" ") }
+            .sortedBy { strength(it[0], r1) }
+            .mapIndexed { i, (_, n) ->
+                //println("${i + 1}: $s - $n - t ${type(s, r1)} - v ${value(s, r1).toString(16)} - s ${strength(s, r1).toString(16)}}")
+                (i + 1) * n.toInt()
+            }.sum()
+
+        val win = winnings(input, true)
+        assertEquals("Day 7.1", 251216224, win)
+
+        val win2 = winnings(input, false)
+        assertEquals("Day 7.2", 250825971, win2)
     }
 }
