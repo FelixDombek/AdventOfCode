@@ -103,4 +103,40 @@ class AdventOfCode2022 : AdventBase(2022) {
         val top2 = stacks2.map { (_, v) -> v.last() }.joinToString("")
         assertEquals("2022.5.2", "NGCMPJLHV", top2)
     }
+
+    @Test
+    fun day6() {
+        val input = getString(6)
+        fun marker(len: Int) = input.windowed(len).withIndex().find { it.value.toSet().size == len }!!.index + len
+        val sop = marker(4)
+        assertEquals("2022.6.1", 1909, sop)
+        val som = marker(14)
+        assertEquals("2022.6.2", 3380, som)
+    }
+
+    @Test
+    fun day7() {
+        val input = getInput(7)
+        var cwd = ""
+        val dirs = mutableMapOf(cwd to 0)
+        input.map { it.split(" ") }.drop(1).forEach { when (val c = it.first()) {
+            "$" -> when (it[1]) {
+                "cd" -> if (it[2] == "..") cwd = cwd.replaceAfterLast('/', "").dropLast(1)
+                        else { cwd = cwd + "/" + it[2] ; dirs[cwd] = 0 }
+            }
+            "dir" -> Unit
+            else -> dirs[cwd] = dirs[cwd]!! + c.toInt()
+        } }
+        val totals = dirs.map { (k, _) -> k to dirs.filterKeys { it.startsWith(k) }.values.sum() }.toMap()
+        val sum = totals.values.filter { it <= 100_000 }.sum()
+        assertEquals("2022.7.1", 1297159, sum)
+
+        val disk = 70_000_000
+        val used = totals[""]!!
+        val free = disk - used
+        val size = 30_000_000
+        val needed = size - free
+        val delete = totals.filterValues { it >= needed }.minBy { (_, v) -> v }
+        assertEquals("2022.7.2", 3866390, delete.value)
+    }
 }
