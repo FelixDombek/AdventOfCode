@@ -279,8 +279,9 @@ class AdventOfCode2023 : AdventBase(2023) {
 
         fun lcm(a: Long, b: Long): Long {
             val larger = max(a, b)
+            val smaller = min(a, b)
             val maxLcm = a * b
-            return LongProgression.fromClosedRange(larger, maxLcm, larger).find { it % a == 0L && it % b == 0L } ?: maxLcm
+            return LongProgression.fromClosedRange(larger, maxLcm, larger).find { it % smaller == 0L }!!
         }
         fun lcm(nums: List<Long>) = nums.reduce { acc, n -> lcm(acc, n) }
 
