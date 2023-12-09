@@ -244,6 +244,10 @@ class AdventOfCode2023 : AdventBase(2023) {
             var n = node
             while (!end(n, count)) n = graph[n]!![ops[count++ % ops.size]]
             return count
+            // or
+            // generateSequence(0) { it + 1 }.fold(node) { n, c ->
+            //    if (!end(n, c)) graph[n]!![ops[c % ops.size]] else return c
+            // }.length
         }
 
         val count = steps("AAA") { n, _ -> n == "ZZZ" }
