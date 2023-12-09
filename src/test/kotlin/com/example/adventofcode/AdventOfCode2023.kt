@@ -2,7 +2,6 @@ package com.example.adventofcode
 
 import org.junit.Assert.*
 import org.junit.Test
-import java.io.File
 import java.util.Scanner
 import kotlin.math.max
 import kotlin.math.min
@@ -239,21 +238,72 @@ class AdventOfCode2023 : AdventBase(2023) {
                 Regex("\\w+").findAll(it).map { it.value }.toList()
             }.associate { (n, l, r) -> n to listOf(l, r) }
         }
-        var count = 0
-        var node = "AAA"
-        while (node != "ZZZ") node = graph[node]!![ops[count++ % ops.size]]
+
+        fun steps(node: String, end: (String, Int) -> Boolean): Int {
+            var count = 0
+            var n = node
+            while (!end(n, count)) n = graph[n]!![ops[count++ % ops.size]]
+            return count
+        }
+
+        val count = steps("AAA") { n, _ -> n == "ZZZ" }
         assertEquals("Day 8.1", 17141, count)
 
-        var count2 = 0L
-        var nodes = graph.keys.filter { it.endsWith('A') }
-        val f = File("nodes")
-        f.writeText("")
-        while (!nodes.all { it.endsWith('Z') }) {
-            println("$count2 - $nodes")
-            f.appendText("$count2 - $nodes\n")
-            nodes = nodes.map { graph[it]!![ops[(count2 % ops.size).toInt()]] }
-            ++count2
+        val nodes = graph.keys.filter { it.endsWith('A') }
+
+        // Not needed, but determines if the Z's are positioned after full circles (they are).
+        // A--->----\  More precisely: The path from A-Z is exactly as long as one circle (Z-Z),
+        //     |_Z__|  meaning we can simply take the LCM below, the prefix doesn't matter.
+        fun circleLen(node: String): Int {
+            val path = mutableMapOf<Pair<String, Int>, Int>()
+            val zs = mutableMapOf<String, MutableList<Int>>()
+            var circlenode = ""
+            val steps = steps(node) { n, count ->
+                val end = path.putIfAbsent(n to count % ops.size, count) != null
+                if (!end) {
+                    if (n.endsWith('Z')) zs.putIfAbsent(n, mutableListOf(count))?.add(count)
+                } else circlenode = n
+                end
+            }
+            val prefixLen = path[circlenode to steps % ops.size]!!
+            val circleLen = path.size - prefixLen
+            //println("start: $it, prefix: ${prefixlen}, circle: ${circlelen}, zs: $zs")
+            return circleLen
         }
-        assertEquals("Day 8.2", 17141, count2)
+
+        val circles = nodes.map { circleLen(it) }
+
+        // now that we know that, we could determine the Z positions much easier:
+        val circles2 = nodes.map { steps(it) { n, _ -> n.endsWith('Z') }.toLong() }
+        assertEquals("$circles", "$circles2")
+
+        fun lcm(a: Long, b: Long): Long {
+            val larger = max(a, b)
+            val maxLcm = a * b
+            return LongProgression.fromClosedRange(larger, maxLcm, larger).find { it % a == 0L && it % b == 0L } ?: maxLcm
+        }
+        fun lcm(nums: List<Long>) = nums.reduce { acc, n -> lcm(acc, n) }
+
+        val count2 = lcm(circles2)
+        assertEquals("Day 8.2", 10818234074807, count2)
+    }
+
+    @Test
+    fun day9() {
+        val input = getInput(9).map { Scanner(it).findAllInt() }
+
+        fun extrapolate(line: List<Int>) = generateSequence(line) {
+            it.zipWithNext { a, b -> b - a }.let { if (it.all { it == 0 }) null else it }
+        }.toList().reversed().fold(0) { acc, l -> l.last() + acc }
+        // or:
+        // val lines = mutableListOf(line)
+        // while (lines.last().any { it != 0 }) lines.add(lines.last().zipWithNext { a, b -> b - a })
+        // return lines.reversed().drop(1).fold(0L) { acc, l -> l.last() + acc }
+
+        val sum = input.sumOf { extrapolate(it) }
+        assertEquals("Day 9.1", 1696140818, sum)
+
+        val sum2 = input.sumOf { extrapolate(it.reversed()) }
+        assertEquals("Day 9.2", 1152, sum2)
     }
 }
