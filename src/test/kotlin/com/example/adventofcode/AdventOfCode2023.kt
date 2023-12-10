@@ -317,26 +317,51 @@ class AdventOfCode2023 : AdventBase(2023) {
         val maze = getInput(10)
         fun m(x: Int, y: Int) = maze[y][x]
         val (sx, sy) = 'S'.let { s -> maze.indexOfFirst { it.contains(s) }.let { maze[it].indexOf(s) to it } }
-        var (px, py) = sx to sy
-        var (cx, cy) = if (m(sx, sy-1) in "7|F") sx to sy-1 else if (m(sx, sy+1) in "J|L") sx to sy+1 else sx+1 to sy
-        operator fun Pair<Int, Int>.plus(rhs: Pair<Int, Int>) = first + rhs.first to second + rhs.second
-        operator fun Pair<Int, Int>.minus(rhs: Pair<Int, Int>) = first - rhs.first to second - rhs.second
-        fun next(px: Int, py: Int, cx: Int, cy: Int, j: Char) =
+        fun dir(px: Int, py: Int, cx: Int, cy: Int) =
+            if (py < cy) 'v' else if (py > cy) '^' else if (px < cx) '>' else '<'
+        fun next(d: Char, j: Char) = when (d) {
             // c-p      -     |     7     F     J     L
             // v0,1          0,1              -1,0   1,0
             // ^0,-1         0,-1 -1,0  1,0
             // >1,0    1,0         0,1        0,-1
             // <-1,0  -1,0              0,1          0,-1
-            if      (py < cy) if (j == '|') 0 to  1 else if (j == 'J') -1 to 0 else 1 to  0
-            else if (py > cy) if (j == '|') 0 to -1 else if (j == '7') -1 to 0 else 1 to  0
-            else if (px < cx) if (j == '-') 1 to  0 else if (j == '7')  0 to 1 else 0 to -1
-            else /*px > cx*/  if (j == '-') -1 to 0 else if (j == 'F')  0 to 1 else 0 to -1
-
-        var len = 1
-        while (cx to cy != sx to sy) {
-            next(px, py, cx, cy, m(cx, cy)).run { px = cx ; py = cy ; cx += first ; cy += second }
-            ++len
+            'v' -> if (j == '|') 0 to 1 else if (j == 'J') -1 to 0 else 1 to 0
+            '^' -> if (j == '|') 0 to -1 else if (j == '7') -1 to 0 else 1 to 0
+            '>' -> if (j == '-') 1 to 0 else if (j == '7') 0 to 1 else 0 to -1
+            else -> if (j == '-') -1 to 0 else if (j == 'F') 0 to 1 else 0 to -1
         }
-        assertEquals("Day 10.1", 6875, len / 2)
+
+        var (cx, cy) = if      (m(sx, sy-1) in "7|F") sx   to sy-1
+                       else if (m(sx, sy+1) in "J|L") sx   to sy+1
+                       else                              sx+1 to sy
+        val loop = mutableListOf((sx to sy) to '?')
+        while (cx to cy != sx to sy) {
+            val (px, py) = loop.last().first
+            val d = dir(px, py, cx, cy)
+            loop.add((cx to cy) to d)
+            next(d, m(cx, cy)).run { cx += first ; cy += second }
+        }
+        val (px, py) = loop.last().first
+        loop[0] = loop.first().first to dir(px, py, cx, cy)
+
+        assertEquals("Day 10.1", 6875, loop.size / 2)
+
+        val ls = loop.map { it.first }.toSet()
+        val l = mutableSetOf<Pair<Int, Int>>()
+        val r = mutableSetOf<Pair<Int, Int>>()
+
+        operator fun Pair<Int, Int>.plus(rhs: Pair<Int, Int>) = first + rhs.first to second + rhs.second
+        operator fun Pair<Int, Int>.minus(rhs: Pair<Int, Int>) = first - rhs.first to second - rhs.second
+
+        for ((c, d) in loop) {
+            val (dl, dr) = when (d) {
+                'v' -> -1 to 0
+                '^' -> 1 to 0
+                '>' -> 0 to 1
+                else -> 0 to -1
+            }.let { c - it to c + it }
+            if (true) {}
+        }
+
     }
 }
