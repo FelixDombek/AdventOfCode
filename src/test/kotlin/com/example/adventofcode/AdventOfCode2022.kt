@@ -151,7 +151,7 @@ class AdventOfCode2022 : AdventBase(2022) {
         fun east(x: Int, y: Int) = (x+1..<forest[y].length).map { forest[y][it] }
 
         val vis = forest.mapIndexed { y, line -> line.mapIndexed { x, tree ->
-            sequenceOf(north(x, y), south(x, y), west(x, y), east(x, y)).any { it.all { it < tree } }
+            sequenceOf(::north, ::south, ::west, ::east).any { it(x, y).all { it < tree } }
         }.count { it } }.sum()
         assertEquals("2022.8.1", 1812, vis)
 
