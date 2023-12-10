@@ -1,4 +1,4 @@
-package com.example.adventofcode
+package com.fd.adventofcode
 
 import java.io.File
 import java.util.*

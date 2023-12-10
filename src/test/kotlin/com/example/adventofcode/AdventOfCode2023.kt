@@ -1,4 +1,4 @@
-package com.example.adventofcode
+package com.fd.adventofcode
 
 import org.junit.Assert.*
 import org.junit.Test
@@ -299,7 +299,7 @@ class AdventOfCode2023 : AdventBase(2023) {
 
         fun extrapolate(line: List<Int>) = generateSequence(line) {
             it.zipWithNext { a, b -> b - a }.let { if (it.all { it == 0 }) null else it }
-        }.toList().reversed().fold(0) { acc, l -> l.last() + acc }
+        }.toList().foldRight(0) { l, acc -> l.last() + acc }
         // or:
         // val lines = mutableListOf(line)
         // while (lines.last().any { it != 0 }) lines.add(lines.last().zipWithNext { a, b -> b - a })
