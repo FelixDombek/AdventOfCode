@@ -311,4 +311,32 @@ class AdventOfCode2023 : AdventBase(2023) {
         val sum2 = input.sumOf { extrapolate(it.reversed()) }
         assertEquals("Day 9.2", 1152, sum2)
     }
+
+    @Test
+    fun day10() {
+        val maze = getInput(10)
+        fun m(x: Int, y: Int) = maze[y][x]
+        val (sx, sy) = 'S'.let { s -> maze.indexOfFirst { it.contains(s) }.let { maze[it].indexOf(s) to it } }
+        var (px, py) = sx to sy
+        var (cx, cy) = if (m(sx, sy-1) in "7|F") sx to sy-1 else if (m(sx, sy+1) in "J|L") sx to sy+1 else sx+1 to sy
+        operator fun Pair<Int, Int>.plus(rhs: Pair<Int, Int>) = first + rhs.first to second + rhs.second
+        operator fun Pair<Int, Int>.minus(rhs: Pair<Int, Int>) = first - rhs.first to second - rhs.second
+        fun next(px: Int, py: Int, cx: Int, cy: Int, j: Char) =
+            // c-p      -     |     7     F     J     L
+            // v0,1          0,1              -1,0   1,0
+            // ^0,-1         0,-1 -1,0  1,0
+            // >1,0    1,0         0,1        0,-1
+            // <-1,0  -1,0              0,1          0,-1
+            if      (py < cy) if (j == '|') 0 to  1 else if (j == 'J') -1 to 0 else 1 to  0
+            else if (py > cy) if (j == '|') 0 to -1 else if (j == '7') -1 to 0 else 1 to  0
+            else if (px < cx) if (j == '-') 1 to  0 else if (j == '7')  0 to 1 else 0 to -1
+            else /*px > cx*/  if (j == '-') -1 to 0 else if (j == 'F')  0 to 1 else 0 to -1
+
+        var len = 1
+        while (cx to cy != sx to sy) {
+            next(px, py, cx, cy, m(cx, cy)).run { px = cx ; py = cy ; cx += first ; cy += second }
+            ++len
+        }
+        assertEquals("Day 10.1", 6875, len / 2)
+    }
 }
