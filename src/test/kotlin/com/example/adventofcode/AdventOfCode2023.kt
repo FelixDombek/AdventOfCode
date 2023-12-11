@@ -316,9 +316,12 @@ class AdventOfCode2023 : AdventBase(2023) {
     fun day10() {
         val maze = getInput(10)
         fun m(x: Int, y: Int) = maze[y][x]
+        // start pos
         val (sx, sy) = 'S'.let { s -> maze.indexOfFirst { it.contains(s) }.let { maze[it].indexOf(s) to it } }
+        // get travel direction through current pos based on previous pos
         fun dir(px: Int, py: Int, cx: Int, cy: Int) =
             if (py < cy) 'v' else if (py > cy) '^' else if (px < cx) '>' else '<'
+        // get delta of next pos based on tile type and travel direction
         fun next(d: Char, j: Char) = when (d) {
             // c-p      -     |     7     F     J     L
             // v0,1          0,1              -1,0   1,0
@@ -331,63 +334,68 @@ class AdventOfCode2023 : AdventBase(2023) {
             else -> if (j == '-') -1 to 0 else if (j == 'F') 0 to 1 else 0 to -1
         }
 
+        // determine next pos after start pos based on adjacent tiles
         var (cx, cy) = if      (m(sx, sy-1) in "F|7") sx   to sy-1
                        else if (m(sx, sy+1) in "L|J") sx   to sy+1
                        else                              sx+1 to sy
-        val loop = mutableListOf((sx to sy) to '?')
+        // traverse pipe loop
+        val loop = mutableMapOf((sx to sy) to '?') // can be a list for 10.1, but we'll make use of this mapping in 10.2
+        var (px, py) = sx to sy
         while (cx to cy != sx to sy) {
-            val (px, py) = loop.last().first
             val d = dir(px, py, cx, cy)
-            loop.add((cx to cy) to d)
+            loop[(cx to cy)] = d
+            px = cx
+            py = cy
             next(d, m(cx, cy)).run { cx += first ; cy += second }
         }
-        val (px, py) = loop.last().first
-        loop[0] = loop.first().first to dir(px, py, cx, cy)
+        loop[sx to sy] = dir(px, py, cx, cy)
 
         assertEquals("Day 10.1", 6875, loop.size / 2)
 
-        val ls = loop.map { it.first }.toSet()
         val sides = List(2) { mutableSetOf<Pair<Int, Int>>() }
-
+        // keep two lists for tiles left and right of the loop (we don't know yet which is inside or outside)
         for ((c, d) in loop) {
-            val ds = when (d) {
+            when (d) {
                 'v' -> -1 to 0
                 '^' -> 1 to 0
                 '>' -> 0 to 1
                 else -> 0 to -1
-            }.let { listOf(c - it, c + it) }
-            ds.zip(sides) { xy, side ->
+            }.let { listOf(c - it, c + it) }.zip(sides) { xy, side ->
                 val t = m(c.first, c.second)
-                (listOf(xy) + (
+                (listOf(xy) + when {
                     // special case for bend tiles: we need to mark their outer 3 tiles as belonging to the side
-                    if (t == '7' && (c.first < xy.first || c.second > xy.second)) listOf(0 to -1, 1 to -1, 1 to 0)
-                    else if (t == 'F' && (c.first > xy.first || c.second > xy.second)) listOf(0 to -1, -1 to -1, -1 to 0)
-                    else if (t == 'J' && (c.first < xy.first || c.second < xy.second)) listOf(1 to 0, 1 to 1, 0 to 1)
-                    else if (t == 'L' && (c.first > xy.first || c.second < xy.second)) listOf(-1 to 0, -1 to 1, 0 to 1)
-                    else emptyList()).map { c + it }
+                    t == '7' && (c.first < xy.first || c.second > xy.second) -> listOf(0 to -1, 1 to -1, 1 to 0)
+                    t == 'F' && (c.first > xy.first || c.second > xy.second) -> listOf(0 to -1, -1 to -1, -1 to 0)
+                    t == 'J' && (c.first < xy.first || c.second < xy.second) -> listOf(1 to 0, 1 to 1, 0 to 1)
+                    t == 'L' && (c.first > xy.first || c.second < xy.second) -> listOf(-1 to 0, -1 to 1, 0 to 1)
+                    else -> emptyList()}.map { c + it }
                 ).forEach {
-                    if (it.second in maze.indices && it.first in maze.first().indices && !ls.contains(it)) side.add(it)
+                    if (it.second in maze.indices && it.first in maze.first().indices && !loop.keys.contains(it)) side.add(it)
                 }
             }
         }
 
+        // mark all tiles reachable from any marked tile as belonging to the same side (this marks all non-loop tiles)
         fun floodfill(side: MutableSet<Pair<Int, Int>>) {
             val q = side.toMutableList()
             while (q.isNotEmpty()) {
                 val t = q.removeLast()
                 (-1..1).forEach { dx -> (-1..1).forEach { dy ->
-                    val xy = t + (dx to dy)
-                    if (xy.second in maze.indices && xy.first in maze.first().indices && !ls.contains(xy)) side.add(xy) && q.add(xy)
+                    (t + (dx to dy)).let { (x, y) ->
+                        if (y in maze.indices && x in maze.first().indices && !loop.keys.contains(x to y))
+                            side.add(x to y) && q.add(x to y)
+                    }
                 } }
             }
         }
         sides.forEach { floodfill(it) }
 
-        assertEquals(maze.size * maze.first().length, sides.sumOf { it.size } + ls.size)
+        assertEquals(maze.size * maze.first().length, sides.sumOf { it.size } + loop.size)
         assertTrue(sides.first().intersect(sides.last()).isEmpty())
-        assertTrue(sides.first().intersect(ls).isEmpty())
-        assertTrue(sides.last().intersect(ls).isEmpty())
+        assertTrue(sides.first().intersect(loop.keys).isEmpty())
+        assertTrue(sides.last().intersect(loop.keys).isEmpty())
 
+        // we skip an explicit test for which side is inside as it's easy to see from the grid
         assertEquals("Day 10.2", 471, sides.last().size)
     }
 }
