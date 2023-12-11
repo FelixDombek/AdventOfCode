@@ -378,7 +378,7 @@ class AdventOfCode2023 : AdventBase(2023) {
         // mark all tiles reachable from any marked tile as belonging to the same side (this marks all non-loop tiles)
         fun floodfill(side: MutableSet<Pair<Int, Int>>) {
             val q = side.toMutableList()
-            while (q.isNotEmpty()) {
+            while (q.isNotEmpty()) {  // or generateSequence { q.removeLastOrNull() }.forEach ...
                 val t = q.removeLast()
                 (-1..1).forEach { dx -> (-1..1).forEach { dy ->
                     (t + (dx to dy)).let { (x, y) ->
