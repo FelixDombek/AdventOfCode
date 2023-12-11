@@ -323,11 +323,11 @@ class AdventOfCode2023 : AdventBase(2023) {
             if (py < cy) 'v' else if (py > cy) '^' else if (px < cx) '>' else '<'
         // get delta of next pos based on tile type and travel direction
         fun next(d: Char, j: Char) = when (d) {
-            // c-p      -     |     7     F     J     L
-            // v0,1          0,1              -1,0   1,0
-            // ^0,-1         0,-1 -1,0  1,0
-            // >1,0    1,0         0,1        0,-1
-            // <-1,0  -1,0              0,1          0,-1
+            //   c-p     -     |     7     F     J     L
+            // v 0,1          0,1              -1,0   1,0
+            // ^ 0,-1         0,-1 -1,0  1,0
+            // > 1,0    1,0         0,1        0,-1
+            // < -1,0  -1,0              0,1          0,-1
             'v' -> if (j == '|') 0 to 1 else if (j == 'J') -1 to 0 else 1 to 0
             '^' -> if (j == '|') 0 to -1 else if (j == '7') -1 to 0 else 1 to 0
             '>' -> if (j == '-') 1 to 0 else if (j == '7') 0 to 1 else 0 to -1
