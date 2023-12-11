@@ -331,8 +331,8 @@ class AdventOfCode2023 : AdventBase(2023) {
             else -> if (j == '-') -1 to 0 else if (j == 'F') 0 to 1 else 0 to -1
         }
 
-        var (cx, cy) = if      (m(sx, sy-1) in "7|F") sx   to sy-1
-                       else if (m(sx, sy+1) in "J|L") sx   to sy+1
+        var (cx, cy) = if      (m(sx, sy-1) in "F|7") sx   to sy-1
+                       else if (m(sx, sy+1) in "L|J") sx   to sy+1
                        else                              sx+1 to sy
         val loop = mutableListOf((sx to sy) to '?')
         while (cx to cy != sx to sy) {
@@ -347,21 +347,47 @@ class AdventOfCode2023 : AdventBase(2023) {
         assertEquals("Day 10.1", 6875, loop.size / 2)
 
         val ls = loop.map { it.first }.toSet()
-        val l = mutableSetOf<Pair<Int, Int>>()
-        val r = mutableSetOf<Pair<Int, Int>>()
-
-        operator fun Pair<Int, Int>.plus(rhs: Pair<Int, Int>) = first + rhs.first to second + rhs.second
-        operator fun Pair<Int, Int>.minus(rhs: Pair<Int, Int>) = first - rhs.first to second - rhs.second
+        val sides = List(2) { mutableSetOf<Pair<Int, Int>>() }
 
         for ((c, d) in loop) {
-            val (dl, dr) = when (d) {
+            val ds = when (d) {
                 'v' -> -1 to 0
                 '^' -> 1 to 0
                 '>' -> 0 to 1
                 else -> 0 to -1
-            }.let { c - it to c + it }
-            if (true) {}
+            }.let { listOf(c - it, c + it) }
+            ds.zip(sides) { xy, side ->
+                val t = m(c.first, c.second)
+                (listOf(xy) + (
+                    // special case for bend tiles: we need to mark their outer 3 tiles as belonging to the side
+                    if (t == '7' && (c.first < xy.first || c.second > xy.second)) listOf(0 to -1, 1 to -1, 1 to 0)
+                    else if (t == 'F' && (c.first > xy.first || c.second > xy.second)) listOf(0 to -1, -1 to -1, -1 to 0)
+                    else if (t == 'J' && (c.first < xy.first || c.second < xy.second)) listOf(1 to 0, 1 to 1, 0 to 1)
+                    else if (t == 'L' && (c.first > xy.first || c.second < xy.second)) listOf(-1 to 0, -1 to 1, 0 to 1)
+                    else emptyList()).map { c + it }
+                ).forEach {
+                    if (it.second in maze.indices && it.first in maze.first().indices && !ls.contains(it)) side.add(it)
+                }
+            }
         }
 
+        fun floodfill(side: MutableSet<Pair<Int, Int>>) {
+            val q = side.toMutableList()
+            while (q.isNotEmpty()) {
+                val t = q.removeLast()
+                (-1..1).forEach { dx -> (-1..1).forEach { dy ->
+                    val xy = t + (dx to dy)
+                    if (xy.second in maze.indices && xy.first in maze.first().indices && !ls.contains(xy)) side.add(xy) && q.add(xy)
+                } }
+            }
+        }
+        sides.forEach { floodfill(it) }
+
+        assertEquals(maze.size * maze.first().length, sides.sumOf { it.size } + ls.size)
+        assertTrue(sides.first().intersect(sides.last()).isEmpty())
+        assertTrue(sides.first().intersect(ls).isEmpty())
+        assertTrue(sides.last().intersect(ls).isEmpty())
+
+        assertEquals("Day 10.2", 471, sides.last().size)
     }
 }

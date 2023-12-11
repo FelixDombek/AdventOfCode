@@ -14,4 +14,9 @@ open class AdventBase(private val year: Int) {
     fun getString(day: Int): String = getFile(day).readText()
 
     fun Scanner.findAllInt() = asSequence().map { it.toInt() }.toList()
+
+    fun writeFile(name: String, contents: String) = File(name).writeText(contents)
+
+    operator fun Pair<Int, Int>.plus(rhs: Pair<Int, Int>) = first + rhs.first to second + rhs.second
+    operator fun Pair<Int, Int>.minus(rhs: Pair<Int, Int>) = first - rhs.first to second - rhs.second
 }
