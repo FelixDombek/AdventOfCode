@@ -3,6 +3,7 @@ package com.fd.adventofcode
 import org.junit.Assert.*
 import org.junit.Test
 import java.util.Scanner
+import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
@@ -351,6 +352,8 @@ class AdventOfCode2023 : AdventBase(2023) {
 
         assertEquals("Day 10.1", 6875, loop.size / 2)
 
+        fun nonloop(xy: Pair<Int, Int>) = // true if xy is a non-loop tile in the maze
+            xy.second in maze.indices && xy.first in maze.first().indices && !loop.keys.contains(xy)
         val sides = List(2) { mutableSetOf<Pair<Int, Int>>() }
         // fill two lists for tiles left and right of the loop (we don't know yet which is inside or outside)
         for ((c, d) in loop) {
@@ -367,9 +370,7 @@ class AdventOfCode2023 : AdventBase(2023) {
                     it == 'J' && (c.first < xy.first || c.second < xy.second) -> listOf(1 to 0, 1 to 1, 0 to 1)
                     it == 'L' && (c.first > xy.first || c.second < xy.second) -> listOf(-1 to 0, -1 to 1, 0 to 1)
                     else -> emptyList()}.map { c + it } }
-                ).forEach {
-                    if (it.second in maze.indices && it.first in maze.first().indices && !loop.keys.contains(it)) side.add(it)
-                }
+                ).forEach { if (nonloop(it)) side.add(it) }
             }
         }
 
@@ -379,13 +380,11 @@ class AdventOfCode2023 : AdventBase(2023) {
             while (stack.isNotEmpty()) {  // or generateSequence { q.removeLastOrNull() }.forEach ...
                 val t = stack.removeLast()
                 (-1..1).forEach { dx -> (-1..1).forEach { dy ->
-                    (t + (dx to dy)).let { (x, y) ->
-                        if (y in maze.indices && x in maze.first().indices && !loop.keys.contains(x to y))
-                            side.add(x to y) && stack.add(x to y)
-                    }
+                    (t + (dx to dy)).let { if (nonloop(it)) side.add(it) && stack.add(it) }
                 } }
             }
         }
+
         sides.forEach { floodfill(it) }
 
         assertEquals(maze.size * maze.first().length, sides.sumOf { it.size } + loop.size)
@@ -395,5 +394,27 @@ class AdventOfCode2023 : AdventBase(2023) {
 
         val inside = sides.first { 0 to 0 !in it }
         assertEquals("Day 10.2", 471, inside.size)
+    }
+
+    @Test
+    fun day11() {
+        val space = getInput(11)
+        val emptyRows = space.map { !it.contains('#') }
+        val emptyCols = space.first().indices.map { i -> space.all { it[i] != '#' } }
+
+        fun empties(from: Pair<Int, Int>, to: Pair<Int, Int>, factor: Int): Long =
+            (factor - 1L) * (emptyRows.subList(from.second, to.second).count { it } +
+                    emptyCols.subList(min(from.first, to.first), max(from.first, to.first)).count { it })
+
+        val galaxies = space.flatMapIndexed { y, line ->
+            line.mapIndexedNotNull { x, c -> if (c == '#') x to y else null }
+        }
+
+        fun dists(factor: Int) = galaxies.mapIndexed { i, to -> galaxies.subList(0, i).sumOf { from ->
+            to.second - from.second + abs(to.first - from.first) + empties(from, to, factor)
+        } }.sum()
+
+        assertEquals("Day 11.1", 9734203, dists(2))
+        assertEquals("Day 11.2", 568914596391, dists(1_000_000))
     }
 }
