@@ -395,7 +395,7 @@ class AdventOfCode2023 : AdventBase(2023) {
         assertTrue(sides.first().intersect(loop.keys).isEmpty())
         assertTrue(sides.last().intersect(loop.keys).isEmpty())
 
-        // we skip an explicit test for which side is inside as it's easy to see from the grid
-        assertEquals("Day 10.2", 471, sides.last().size)
+        val inside = sides.first { 0 to 0 !in it }
+        assertEquals("Day 10.2", 471, inside.size)
     }
 }
