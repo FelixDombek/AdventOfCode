@@ -356,22 +356,22 @@ class AdventOfCode2023 : AdventBase(2023) {
                        '^'  ->  1 to  0
                        '>'  ->  0 to  1
                        else ->  0 to -1
-            }.let { listOf(c - it, c + it) }.zip(sides) { xy, side ->
-                (listOf(xy) + maze[c.second][c.first].let { when {
+            }.let { listOf(c - it, c + it) }.zip(sides) { (x, y), side ->
+                (listOf(x to y) + maze[c.second][c.first].let { when {
                     // special case for bend tiles: we need to mark their outer 3 tiles as belonging to the side
-                    it == '7' && (c.first < xy.first || c.second > xy.second) -> listOf( 0 to -1,  1 to -1,  1 to 0)
-                    it == 'F' && (c.first > xy.first || c.second > xy.second) -> listOf( 0 to -1, -1 to -1, -1 to 0)
-                    it == 'J' && (c.first < xy.first || c.second < xy.second) -> listOf( 1 to  0,  1 to  1,  0 to 1)
-                    it == 'L' && (c.first > xy.first || c.second < xy.second) -> listOf(-1 to  0, -1 to  1,  0 to 1)
-                    else                                                      -> emptyList() }.map { c + it }
+                    it == '7' && (c.first < x || c.second > y) -> listOf( 0 to -1,  1 to -1,  1 to 0)
+                    it == 'F' && (c.first > x || c.second > y) -> listOf( 0 to -1, -1 to -1, -1 to 0)
+                    it == 'J' && (c.first < x || c.second < y) -> listOf( 1 to  0,  1 to  1,  0 to 1)
+                    it == 'L' && (c.first > x || c.second < y) -> listOf(-1 to  0, -1 to  1,  0 to 1)
+                    else                                       -> emptyList() }.map { c + it }
                 }).forEach { if (nonloop(it)) side.add(it) }
             }
         }
 
         // mark all tiles reachable from any marked tile as belonging to the same side (this marks all non-loop tiles)
         fun floodfill(side: MutableSet<Pair<Int, Int>>) {
-            val stack = side.toMutableList()
-            while (stack.isNotEmpty()) {  // or generateSequence { q.removeLastOrNull() }.forEach ...
+            val stack = side.toMutableList() // or: with (side.toMutableList()) {
+            while (stack.isNotEmpty()) {     //         generateSequence { removeLastOrNull() }.forEach {...}
                 val t = stack.removeLast()
                 (-1..1).forEach { dx -> (-1..1).forEach { dy ->
                     (t + (dx to dy)).let { if (nonloop(it)) side.add(it) && stack.add(it) }
