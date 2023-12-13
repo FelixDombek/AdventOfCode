@@ -1,12 +1,14 @@
 package com.fd.adventofcode
 
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.util.Scanner
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
+
 
 class AdventOfCode2023 : AdventBase(2023) {
     @Test
@@ -316,7 +318,7 @@ class AdventOfCode2023 : AdventBase(2023) {
     @Test
     fun day10() {
         val maze = getInput(10)
-        val (sx, sy) = 'S'.let { s -> maze.indexOfFirst { it.contains(s) }.let { maze[it].indexOf(s) to it } }
+        val (sx, sy) = 'S'.let { s -> maze.indexOfFirst { s in it }.let { maze[it].indexOf(s) to it } }
         // get travel direction into current pos based on previous pos
         fun dir(px: Int, py: Int, cx: Int, cy: Int) = when { py < cy -> 'v'
                                                              py > cy -> '^'
@@ -333,8 +335,8 @@ class AdventOfCode2023 : AdventBase(2023) {
         var (cx, cy) = when { maze[sy-1][sx] in "F|7" -> sx   to sy-1
                               maze[sy+1][sx] in "L|J" -> sx   to sy+1
                               else                    -> sx+1 to sy   }
-        // traverse pipe loop
-        val loop = mutableMapOf((sx to sy) to '?') // can be a list for 10.1, but we'll make use of this mapping in 10.2
+        // traverse pipe loop. loop can be a list for 10.1, but we'll make use of this mapping in 10.2
+        val loop = mutableMapOf((sx to sy) to '?')
         var (px, py) = sx to sy
         while (cx to cy != sx to sy) {
             val d = dir(px, py, cx, cy)
@@ -348,7 +350,7 @@ class AdventOfCode2023 : AdventBase(2023) {
         assertEquals("Day 10.1", 6875, loop.size / 2)
 
         fun nonloop(xy: Pair<Int, Int>) = // true if xy is a non-loop tile in the maze
-            xy.second in maze.indices && xy.first in maze.first().indices && !loop.keys.contains(xy)
+            xy.second in maze.indices && xy.first in maze.first().indices && xy !in loop.keys
         val sides = List(2) { mutableSetOf<Pair<Int, Int>>() }
         // fill two lists for tiles left and right of the loop (we don't know yet which is inside or outside)
         for ((c, d) in loop) {
@@ -410,4 +412,45 @@ class AdventOfCode2023 : AdventBase(2023) {
         assertEquals("Day 11.1", 9734203, dists(2))
         assertEquals("Day 11.2", 568914596391, dists(1_000_000))
     }
+
+    @Test
+    fun day12() {
+        class Row(val ss: String, g: List<Int>) {
+            val s = "$ss."
+            val gs = makeGs(g)
+            val cache = mutableMapOf<Pair<Int, Int>, Long>()
+            fun count() = rec(ss.length, gs.indices.last)
+            private fun fits(g: IntRange, c: Char) = g.all { s[it].let { it == c || it == '?' } }
+            private fun rec(ub: Int, gi: Int): Long {
+                cache[ub to gi]?.let { return it }
+                val cg = gs[gi]
+                var count = 0L
+                for (i in 0..<ub-cg.last) {
+                    val cgi = cg + i
+                    val agi = cgi.last+1..ub
+                    if (fits(cgi, '#') && fits(agi, '.'))
+                        if (gi == 0) if (fits(0..<cgi.first, '.')) ++count else break
+                        else count += rec(cgi.first - 1, gi - 1)
+                }
+                cache[ub to gi] = count
+                return count
+            }
+            private fun makeGs(lens: List<Int>): List<IntRange> {
+                var begin = 0
+                return lens.map {
+                    val end = begin + it
+                    begin..<end.also { begin = end + 1 }
+                }
+            }
+        }
+
+        val input = getInput(12).map { with (Scanner(it)) { next() to skipAndSet(",").findAllInt() } }
+        val sum = input.sumOf { (s, g) -> Row(s, g).count() }
+        assertEquals("Day 12.1", 6488, sum)
+
+        val input2 = input.map { (s, g) -> 5.let { List(it) {s}.joinToString("?") to List(it) {g}.flatten() } }
+        val sum2 = input2.sumOf{ (s, g) -> Row(s, g).count() }
+        assertEquals("Day 12.2", 815364548481, sum2 )
+    }
+
 }
