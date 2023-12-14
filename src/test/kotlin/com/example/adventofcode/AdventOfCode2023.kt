@@ -394,7 +394,7 @@ class AdventOfCode2023 : AdventBase(2023) {
     @Test
     fun day11() {
         val space = getInput(11)
-        val emptyRows = space.map { !it.contains('#') }
+        val emptyRows = space.map { '#' !in it }
         val emptyCols = space.first().indices.map { i -> space.all { it[i] != '#' } }
 
         fun empties(from: Pair<Int, Int>, to: Pair<Int, Int>, factor: Int): Long =
@@ -417,25 +417,25 @@ class AdventOfCode2023 : AdventBase(2023) {
     fun day12() {
         class Row(val ss: String, g: List<Int>) {
             val s = "$ss."
-            val gs = makeGs(g)
+            val gs = groupsToRanges(g)
             val cache = mutableMapOf<Pair<Int, Int>, Long>()
             fun count() = rec(ss.length, gs.indices.last)
             private fun fits(g: IntRange, c: Char) = g.all { s[it].let { it == c || it == '?' } }
-            private fun rec(ub: Int, gi: Int): Long {
-                cache[ub to gi]?.let { return it }
-                val cg = gs[gi]
+            private fun rec(upperBound: Int, groupIdx: Int): Long {
+                cache[upperBound to groupIdx]?.let { return it }
+                val curGroup = gs[groupIdx]
                 var count = 0L
-                for (i in 0..<ub-cg.last) {
-                    val cgi = cg + i
-                    val agi = cgi.last+1..ub
-                    if (fits(cgi, '#') && fits(agi, '.'))
-                        if (gi == 0) if (fits(0..<cgi.first, '.')) ++count else break
-                        else count += rec(cgi.first - 1, gi - 1)
+                for (i in 0..<upperBound-curGroup.last) {
+                    val curGroupPos = curGroup + i
+                    val suffixPos = curGroupPos.last+1..upperBound
+                    if (fits(curGroupPos, '#') && fits(suffixPos, '.'))
+                        if (groupIdx == 0) if (fits(0..<curGroupPos.first, '.')) ++count else break
+                        else count += rec(curGroupPos.first - 1, groupIdx - 1)
                 }
-                cache[ub to gi] = count
+                cache[upperBound to groupIdx] = count
                 return count
             }
-            private fun makeGs(lens: List<Int>): List<IntRange> {
+            private fun groupsToRanges(lens: List<Int>): List<IntRange> {
                 var begin = 0
                 return lens.map {
                     val end = begin + it
@@ -453,4 +453,22 @@ class AdventOfCode2023 : AdventBase(2023) {
         assertEquals("Day 12.2", 815364548481, sum2 )
     }
 
+    @Test
+    fun day13() {
+        val fields = getString(13).split("\n\n").map { it.lines() }
+
+        fun isSymmetric(f: List<String>, i: Int, errors: Int) =
+            f.take(i).reversed().zip(f.drop(i)).sumOf { (l, r) -> l.zip(r).count { (l, r) -> l != r } } == errors
+
+        fun score(f: List<String>, errors: Int = 0) =
+            f.indices.drop(1).firstOrNull { isSymmetric(f, it, errors) } ?: 0
+
+        fun combined(f: List<String>, errors: Int = 0) = 100 * score(f, errors) + score(f.transposed(), errors)
+
+        val sum = fields.sumOf { combined(it) }
+        assertEquals("Day 13.1", 29165, sum)
+
+        val sum2 = fields.sumOf { combined(it, 1) }
+        assertEquals("Day 13.2", 32192, sum2)
+    }
 }

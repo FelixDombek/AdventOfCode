@@ -25,4 +25,11 @@ open class AdventBase(private val year: Int) {
     operator fun IntRange.plus(i: Int) = first+i..last+i
 
     fun Any?.println() = println(this)
+
+    fun List<String>.transposed() =
+        firstOrNull()?.indices?.map { i -> indices.joinToString { j -> this[j][i].toString() } } ?: emptyList()
+
+    fun iota(start: Int = 0) = generateSequence(start - 1) { it + 1 }
+
+    fun List<String>.column(i: Int) = map { it[i] }.joinToString("")
 }
