@@ -444,7 +444,7 @@ class AdventOfCode2023 : AdventBase(2023) {
             }
         }
 
-        val input = getInput(12).map { with (Scanner(it)) { next() to skipAndSet(",").findAllInt() } }
+        val input = getInput(12).map { with (Scanner(it).useDelimiter("[, ]")) { next() to findAllInt() } }
         val sum = input.sumOf { (s, g) -> Row(s, g).count() }
         assertEquals("Day 12.1", 6488, sum)
 
