@@ -366,7 +366,7 @@ class AdventOfCode2023 : AdventBase(2023) {
                     it == 'J' && (c.first < x || c.second < y) -> listOf( 1 to  0,  1 to  1,  0 to 1)
                     it == 'L' && (c.first > x || c.second < y) -> listOf(-1 to  0, -1 to  1,  0 to 1)
                     else                                       -> emptyList() }.map { c + it }
-                }).forEach { if (nonloop(it)) side.add(it) }
+                }).filter { nonloop(it) }.let { side.addAll(it) }
             }
         }
 
@@ -470,5 +470,35 @@ class AdventOfCode2023 : AdventBase(2023) {
 
         val sum2 = fields.sumOf { combined(it, 1) }
         assertEquals("Day 13.2", 32192, sum2)
+    }
+
+    @Test
+    fun day14() {
+        val field = getInput(14).transposed()
+        fun weighCol(s: String): Int {
+            var stop = 0
+            fun weigh(i: Int) = s.length - i
+            return s.mapIndexed { i, c -> when (c) {
+                '#' -> 0.also { stop = i + 1 }
+                'O' -> weigh(stop).also { ++stop }
+                else -> 0
+            } }.sum()
+        }
+        val sum = field.sumOf { weighCol(it) }
+        assertEquals("Day 14.1", 108889, sum)
+    }
+
+    @Test
+    fun day15() {
+        val input = getString(15).split(",")
+        fun HASH(s: String) = s.fold(0) { h, c -> (h + c.code) * 17 % 256 }
+        val sum = input.sumOf { HASH(it) }
+        assertEquals("Day 15.1", 521434, sum)
+    }
+
+    @Test
+    fun day16() {
+        val input = getInput(16)
+
     }
 }
