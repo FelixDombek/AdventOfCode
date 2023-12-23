@@ -3,6 +3,7 @@ package com.fd.adventofcode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.util.PriorityQueue
 import java.util.Scanner
 import kotlin.math.abs
 import kotlin.math.max
@@ -499,6 +500,96 @@ class AdventOfCode2023 : AdventBase(2023) {
     @Test
     fun day16() {
         val input = getInput(16)
+        fun beam(dir: Char, x: Int, y: Int): Int {
+            val visited = mutableSetOf<Triple<Char, Int, Int>>()
+            fun step(dir: Char, x: Int, y: Int) {
+                if (y !in input.indices || x !in input[y].indices) return
+                if (!visited.add(Triple(dir, x, y))) return
 
+                when (input[y][x]) {
+                    '\\' -> when (dir) {
+                        '<' -> step('^', x, y-1)
+                        '>' -> step('v', x, y+1)
+                        '^' -> step('<', x-1, y)
+                        'v' -> step('>', x+1, y)
+                    }
+                    '/' -> when (dir) {
+                        '<' -> step('v', x, y+1)
+                        '>' -> step('^', x, y-1)
+                        '^' -> step('>', x+1, y)
+                        'v' -> step('<', x-1, y)
+                    }
+                    '-' -> when (dir) {
+                        '<' -> step('<', x-1, y)
+                        '>' -> step('>', x+1, y)
+                        '^', 'v' -> { step('<', x-1, y) ; step('>', x+1, y) }
+                    }
+                    '|' -> when (dir) {
+                        '<', '>' -> { step('^', x, y-1) ; step('v', x, y+1) }
+                        '^' -> step('^', x, y-1)
+                        'v' -> step('v', x, y+1)
+                    }
+                    else -> when (dir) {
+                        '<' -> step('<', x-1, y)
+                        '>' -> step('>', x+1, y)
+                        '^' -> step('^', x, y-1)
+                        'v' -> step('v', x, y+1)
+                    }
+                }
+            }
+
+            step(dir, x, y)
+            return visited.map { (_, x, y) -> x to y }.toSet().size
+        }
+
+        val active = beam('>', 0, 0)
+        assertEquals("Day 16.1", 7562, active)
+
+        val mostActive = max(
+            input.indices.maxOf { max(beam('>', 0, it), beam('<', input.first().indices.last, it)) },
+            input.first().indices.maxOf { max(beam('v', it, 0), beam('^', it, input.indices.last)) }
+        )
+        assertEquals("Day 16.2", 7793, mostActive)
+    }
+
+    @Test
+    fun day17() {
+        val input = getInput(1017)
+        data class Label(val cost: Int, val straight: Int, val x: Int, val y: Int, val pred: Label?) {
+            override fun toString() = "lbl($cost, s$straight, $x,$y)"
+        }
+        var counter = 0
+        fun dijkstra(): Label {
+            val queue = PriorityQueue<Label>(compareBy { it.cost })
+            val settled = mutableMapOf<Pair<Pair<Int, Int>, Pair<Int, Int>>, Int>()
+            val start = Label(0, 0, 0, 0, null)
+            queue.add(start)
+            val target = input.first().indices.last to input.indices.last
+            while (++counter <= 100000) {
+                val minlbl = queue.remove()
+                println("$minlbl<-${minlbl.pred} - ${queue.size} ${queue.peek()}")
+                if (minlbl.x == target.first && minlbl.y == target.second) return minlbl
+                listOf(-1 to 0, 1 to 0, 0 to -1, 0 to 1).forEach {
+                    val (newX, newY) = (minlbl.x to minlbl.y) + it
+                    if (!input.hasIndices(newX, newY)) return@forEach
+                    val is180 = minlbl.pred != null && minlbl.pred.x == newX && minlbl.pred.y == newY
+                    if (is180) return@forEach
+                    val isStraight = minlbl.pred != null && (newX == minlbl.pred.x || newY == minlbl.pred.y)
+                    val newStraight = if (isStraight) minlbl.straight + 1 else 1
+                    if (newStraight > 3) return@forEach
+                    val newCost = minlbl.cost + input[newY][newX].digitToInt()
+                    val oldCost = settled[(minlbl.x to minlbl.y) to (newX to newY)]
+                    if (oldCost != null && newCost >= oldCost) return@forEach
+                    settled[(minlbl.x to minlbl.y) to (newX to newY)] = newCost
+                    val newLabel = Label (newCost, newStraight, newX, newY, minlbl)
+                    println(" - $newLabel")
+                    queue.add(newLabel)
+                }
+            }
+            return start
+        }
+        val finalLabel = dijkstra()
+        generateSequence(finalLabel) { it.pred }.toList().reversed().let { println("steps: ${it.size}") ; it.forEach { println(it) } }
+        assertEquals("Day 17.1", 7793, finalLabel.cost)
     }
 }

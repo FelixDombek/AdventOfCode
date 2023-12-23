@@ -26,10 +26,9 @@ open class AdventBase(private val year: Int) {
 
     fun Any?.println() = println(this)
 
-    fun List<String>.transposed() =
-        firstOrNull()?.indices?.map { i -> indices.joinToString("") { j -> this[j][i].toString() } } ?: emptyList()
+    fun List<String>.column(i: Int) = map { it[i] }.joinToString("")
+    fun List<String>.transposed() = firstOrNull()?.indices?.map { column(it) } ?: emptyList()
+    fun List<String>.hasIndices(x: Int, y: Int) = y in indices && x in first().indices
 
     fun iota(start: Int = 0) = generateSequence(start - 1) { it + 1 }
-
-    fun List<String>.column(i: Int) = map { it[i] }.joinToString("")
 }
