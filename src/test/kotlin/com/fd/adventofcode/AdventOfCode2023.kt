@@ -495,6 +495,19 @@ class AdventOfCode2023 : AdventBase(2023) {
         fun HASH(s: String) = s.fold(0) { h, c -> (h + c.code) * 17 % 256 }
         val sum = input.sumOf { HASH(it) }
         assertEquals("Day 15.1", 521434, sum)
+
+        val HASHMAP = Array(256) { mutableListOf<Pair<String, Int>>() }
+        fun toOp(s: String) = with (Scanner(s).useDelimiter("[-=]")) { next() to if (hasNext()) nextInt() else null }
+        input.map { with (toOp(it)) { Triple(first, HASHMAP[HASH(first)], second) } }.forEach { (label, box, focal) ->
+            val lens = box.find { it.first == label }
+            if (focal == null) box.remove(lens)
+            else if (lens != null) box[box.indexOf(lens)] = label to focal
+            else box.add(label to focal)
+        }
+        val power = HASHMAP.foldIndexed(0) { iBox, acc, box -> acc + box.foldIndexed(0) { iSlot, accBox, lens ->
+            accBox + (iBox+1) * (iSlot+1) * lens.second
+        } }
+        assertEquals("Day 15.2", 248279, power)
     }
 
     @Test
@@ -602,31 +615,26 @@ class AdventOfCode2023 : AdventBase(2023) {
             with (nextInt(16)) { (when (this and 0xF) {0->'R';1->'D';2->'L';else->'U'}) to (this shr 4) }
         ) } }
 
-        fun toPolygon(p: List<Pair<Char, Int>>) = p.fold(mutableListOf(Point(0, 0))) { acc, op ->
-            acc += with (acc.last()) { when (op.first) {
+        fun toPolygon(p: List<Pair<Char, Int>>) = p.scan(Point(0, 0)) { acc, op ->
+            with (acc) { when (op.first) {
                 'U' -> Point(x, y - op.second)
                 'D' -> Point(x, y + op.second)
                 'L' -> Point(x - op.second, y)
                 else -> Point(x + op.second, y)
-            } } ; acc
+            } }
         }
-
         fun shoelace(p: List<Point>) = abs((p.indices.toList() + 0).zipWithNext().fold(0L) { acc, (i, j) ->
             acc + p[i].x * p[j].y - p[j].x * p[i].y
         }) / 2
-
         fun circum(p: List<Point>) = (p.indices.toList() + 0).zipWithNext().fold(0L) { acc, (i, j) ->
             acc + abs(p[i].x - p[j].x + p[i].y - p[j].y)
         }
-
         fun area(p: List<Point>) = shoelace(p) + circum(p) / 2 + 1
 
         val polygon = toPolygon(ops.map { it.first })
-
         assertEquals("Day 18.1", 56923, area(polygon))
 
         val polygon2 = toPolygon(ops.map { it.second })
-
         assertEquals("Day 18.2", 66296566363189, area(polygon2))
     }
 }
