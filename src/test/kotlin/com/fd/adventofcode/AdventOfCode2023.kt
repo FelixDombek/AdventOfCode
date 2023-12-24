@@ -554,42 +554,79 @@ class AdventOfCode2023 : AdventBase(2023) {
 
     @Test
     fun day17() {
-        val input = getInput(1017)
+        val input = getInput(17)
         data class Label(val cost: Int, val straight: Int, val x: Int, val y: Int, val pred: Label?) {
             override fun toString() = "lbl($cost, s$straight, $x,$y)"
+            fun isValid() = x != -1
         }
-        var counter = 0
-        fun dijkstra(): Label {
+        fun dijkstra(targetX: Int, targetY: Int, minStraight: Int, maxStraight: Int): Label {
             val queue = PriorityQueue<Label>(compareBy { it.cost })
-            val settled = mutableMapOf<Pair<Pair<Int, Int>, Pair<Int, Int>>, Int>()
-            val start = Label(0, 0, 0, 0, null)
+            val settled = mutableMapOf<Triple<Pair<Int, Int>, Pair<Int, Int>, Int>, Int>()
+            val start = Label(0, 0, 0, 0, Label(0, 0, -1, -1, null))
             queue.add(start)
-            val target = input.first().indices.last to input.indices.last
-            while (++counter <= 100000) {
+            while (true) {
                 val minlbl = queue.remove()
-                println("$minlbl<-${minlbl.pred} - ${queue.size} ${queue.peek()}")
-                if (minlbl.x == target.first && minlbl.y == target.second) return minlbl
+                val pred = minlbl.pred!!
+                if (minlbl.x == targetX && minlbl.y == targetY && minlbl.straight >= minStraight) return minlbl
                 listOf(-1 to 0, 1 to 0, 0 to -1, 0 to 1).forEach {
                     val (newX, newY) = (minlbl.x to minlbl.y) + it
-                    if (!input.hasIndices(newX, newY)) return@forEach
-                    val is180 = minlbl.pred != null && minlbl.pred.x == newX && minlbl.pred.y == newY
-                    if (is180) return@forEach
-                    val isStraight = minlbl.pred != null && (newX == minlbl.pred.x || newY == minlbl.pred.y)
+                    /* check if in field */ if (!input.hasIndices(newX, newY)) return@forEach
+                    val is180 = pred.x == newX && pred.y == newY
+                    /* check if 180 turn */ if (is180) return@forEach
+                    val isStraight = newX == pred.x || newY == pred.y
+                    /* check if it may already turn */ if (pred.isValid() && !isStraight && minlbl.straight < minStraight) return@forEach
                     val newStraight = if (isStraight) minlbl.straight + 1 else 1
-                    if (newStraight > 3) return@forEach
+                    /* check if it may continue to go straight */ if (newStraight > maxStraight) return@forEach
                     val newCost = minlbl.cost + input[newY][newX].digitToInt()
-                    val oldCost = settled[(minlbl.x to minlbl.y) to (newX to newY)]
-                    if (oldCost != null && newCost >= oldCost) return@forEach
-                    settled[(minlbl.x to minlbl.y) to (newX to newY)] = newCost
-                    val newLabel = Label (newCost, newStraight, newX, newY, minlbl)
-                    println(" - $newLabel")
+                    val mapItem = Triple(minlbl.x to minlbl.y, newX to newY, newStraight)
+                    val oldCost = settled[mapItem]
+                    /* check if cheaper way already found */ if (oldCost != null && newCost >= oldCost) return@forEach
+                    settled[mapItem] = newCost
+                    val newLabel = Label(newCost, newStraight, newX, newY, minlbl)
                     queue.add(newLabel)
                 }
             }
-            return start
         }
-        val finalLabel = dijkstra()
-        generateSequence(finalLabel) { it.pred }.toList().reversed().let { println("steps: ${it.size}") ; it.forEach { println(it) } }
-        assertEquals("Day 17.1", 7793, finalLabel.cost)
+
+        val finalLabel = dijkstra(input.first().indices.last, input.indices.last, 0, 3)
+        assertEquals("Day 17.1", 956, finalLabel.cost)
+
+        val finalLabel2 = dijkstra(input.first().indices.last, input.indices.last, 4, 10)
+        assertEquals("Day 17.2", 1106, finalLabel2.cost)
+    }
+
+    @Test
+    fun day18() {
+        val ops = getInput(18).map { with (Scanner(it).useDelimiter("[ (#)]+")) { Pair(
+            next().first() to nextInt(),
+            with (nextInt(16)) { (when (this and 0xF) {0->'R';1->'D';2->'L';else->'U'}) to (this shr 4) }
+        ) } }
+
+        fun toPolygon(p: List<Pair<Char, Int>>) = p.fold(mutableListOf(Point(0, 0))) { acc, op ->
+            acc += with (acc.last()) { when (op.first) {
+                'U' -> Point(x, y - op.second)
+                'D' -> Point(x, y + op.second)
+                'L' -> Point(x - op.second, y)
+                else -> Point(x + op.second, y)
+            } } ; acc
+        }
+
+        fun shoelace(p: List<Point>) = abs((p.indices.toList() + 0).zipWithNext().fold(0L) { acc, (i, j) ->
+            acc + p[i].x * p[j].y - p[j].x * p[i].y
+        }) / 2
+
+        fun circum(p: List<Point>) = (p.indices.toList() + 0).zipWithNext().fold(0L) { acc, (i, j) ->
+            acc + abs(p[i].x - p[j].x + p[i].y - p[j].y)
+        }
+
+        fun area(p: List<Point>) = shoelace(p) + circum(p) / 2 + 1
+
+        val polygon = toPolygon(ops.map { it.first })
+
+        assertEquals("Day 18.1", 56923, area(polygon))
+
+        val polygon2 = toPolygon(ops.map { it.second })
+
+        assertEquals("Day 18.2", 66296566363189, area(polygon2))
     }
 }
