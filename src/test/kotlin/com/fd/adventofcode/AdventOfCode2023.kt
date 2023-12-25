@@ -475,18 +475,37 @@ class AdventOfCode2023 : AdventBase(2023) {
 
     @Test
     fun day14() {
-        val field = getInput(14).transposed()
-        fun weighCol(s: String): Int {
+        var field = getInput(14).toMatrix().rotated180() // rotations needed for part 2
+        fun MutableList<Char>.tiltCol() {
             var stop = 0
-            fun weigh(i: Int) = s.length - i
-            return s.mapIndexed { i, c -> when (c) {
-                '#' -> 0.also { stop = i + 1 }
-                'O' -> weigh(stop).also { ++stop }
-                else -> 0
-            } }.sum()
+            forEachIndexed { i, c -> when (c) {
+                '#' -> stop = i + 1
+                'O' -> { if (stop != i) { this[stop] = 'O' ; this[i] = '.' } ; ++stop }
+            } }
         }
-        val sum = field.sumOf { weighCol(it) }
-        assertEquals("Day 14.1", 108889, sum)
+        fun List<MutableList<Char>>.tiltField() = forEach { it.tiltCol() }
+        fun step(f: List<MutableList<Char>>) = f.rotatedRight().also { it.tiltField() }
+        fun weigh(f: List<List<Char>>) = f.rotated180().mapIndexed { i, l -> l.count { it == 'O' } * (f.size - i) }.sum()
+
+        val weight = weigh(step(field).rotatedLeft())
+        assertEquals("Day 14.1", if (isExample) 136 else 108889, weight)
+
+        fun cycle(f: List<MutableList<Char>>) = (1..4).fold(f) { ff, _ -> step(ff) }
+        val cache = mutableMapOf(field to 0)
+        val weights = mutableMapOf(0 to weigh(field))
+        var counter = 0
+        var prev: Int?
+        do {
+            ++counter
+            field = cycle(field)
+            weights[counter] = weigh(field)
+            prev = cache.putIfAbsent(field, counter)
+        } while (prev == null)
+        val cycleLen = counter - prev
+        val target = 1_000_000_000
+        val valueIndex = (target - prev) % cycleLen + prev
+        val weight2 = weights[valueIndex]
+        assertEquals("Day 14.2", if (isExample) 64 else 104671, weight2)
     }
 
     @Test
@@ -636,5 +655,40 @@ class AdventOfCode2023 : AdventBase(2023) {
 
         val polygon2 = toPolygon(ops.map { it.second })
         assertEquals("Day 18.2", 66296566363189, area(polygon2))
+    }
+
+    @Test
+    fun day19() {
+        val (workflowIn, partIn) = getString(19).split("\n\n").map { it.lines() }
+        data class Rule(val action: String, val cat: Char?, val comp: Char?, val value: Int) {
+            fun match(part: Map<Char, Int>) = cat == null || part[cat]!!.let { if (comp == '<') it < value else it > value }
+        }
+        val actionPat = "((?<AR%>[AR])|(?<wf%>[a-z]+))"
+        val complexRulePat = "((?<cat>[amsx])(?<comp>[<>])(?<val>\\d+):${actionPat.replace('%', '1')})"
+        val ruleRe = Regex("($complexRulePat|${actionPat.replace('%', '2')})")
+
+        val workflows = workflowIn.associate { with (Scanner(it).useDelimiter("[{,}]")) {
+            next() to asSequence().map { with (ruleRe.matchEntire(it)!!.groups) {
+                Rule(
+                    (get("AR1") ?: get("AR2") ?: get("wf1") ?: get("wf2"))!!.value,
+                    get("cat")?.value?.single(),
+                    get("comp")?.value?.single(),
+                    get("val")?.value?.toInt() ?: 0
+                )
+            } }.toList()
+        } }
+
+        val parts = partIn.map { Scanner(it).useDelimiter("[{,}]").asSequence().map {
+            it.split("=") }.associate { (k, v) -> k.single() to v.toInt() }
+        }
+
+        fun apply(part: Map<Char, Int>, id: String): Int =
+            when (val wf = workflows[id]!!.first { it.match(part) }.action) {
+                "A" -> part.values.sum()
+                "R" -> 0
+                else -> apply(part, wf)
+            }
+        val sum = parts.sumOf { apply(it, "in") }
+        assertEquals("Day 19.1", if (isExample) 19114 else 348378, sum)
     }
 }
