@@ -700,45 +700,51 @@ class AdventOfCode2023 : AdventBase(2023) {
         fun traverse(id: String, rng: RatingRange) {
             if (id == "A") { volume += rng.volume() ; return }
             if (id == "R") return
-            for (rule in workflows[id]!!) {
-                if (rule.cat == null) traverse(rule.action, rng)
-                else when (rule.cat to rule.comp!!) {
-                    'a' to '<' -> { traverse(rule.action, rng.copy(au = min(rule.value - 1, rng.au))) ; rng.al = max(rule.value, rng.al) }
-                    'a' to '>' -> { traverse(rule.action, rng.copy(al = max(rule.value + 1, rng.al))) ; rng.au = min(rule.value, rng.au) }
-                    'm' to '<' -> { traverse(rule.action, rng.copy(mu = min(rule.value - 1, rng.mu))) ; rng.ml = max(rule.value, rng.ml) }
-                    'm' to '>' -> { traverse(rule.action, rng.copy(ml = max(rule.value + 1, rng.ml))) ; rng.mu = min(rule.value, rng.mu) }
-                    's' to '<' -> { traverse(rule.action, rng.copy(su = min(rule.value - 1, rng.su))) ; rng.sl = max(rule.value, rng.sl) }
-                    's' to '>' -> { traverse(rule.action, rng.copy(sl = max(rule.value + 1, rng.sl))) ; rng.su = min(rule.value, rng.su) }
-                    'x' to '<' -> { traverse(rule.action, rng.copy(xu = min(rule.value - 1, rng.xu))) ; rng.xl = max(rule.value, rng.xl) }
-                    'x' to '>' -> { traverse(rule.action, rng.copy(xl = max(rule.value + 1, rng.xl))) ; rng.xu = min(rule.value, rng.xu) }
+            for (r in workflows[id]!!) { with (rng) {
+                if (r.cat == null) traverse(r.action, rng)
+                else when (r.cat to r.comp!!) {
+                    'a' to '<' -> { traverse(r.action, copy(au = min(r.value - 1, au))) ; al = max(r.value, al) }
+                    'a' to '>' -> { traverse(r.action, copy(al = max(r.value + 1, al))) ; au = min(r.value, au) }
+                    'm' to '<' -> { traverse(r.action, copy(mu = min(r.value - 1, mu))) ; ml = max(r.value, ml) }
+                    'm' to '>' -> { traverse(r.action, copy(ml = max(r.value + 1, ml))) ; mu = min(r.value, mu) }
+                    's' to '<' -> { traverse(r.action, copy(su = min(r.value - 1, su))) ; sl = max(r.value, sl) }
+                    's' to '>' -> { traverse(r.action, copy(sl = max(r.value + 1, sl))) ; su = min(r.value, su) }
+                    'x' to '<' -> { traverse(r.action, copy(xu = min(r.value - 1, xu))) ; xl = max(r.value, xl) }
+                    'x' to '>' -> { traverse(r.action, copy(xl = max(r.value + 1, xl))) ; xu = min(r.value, xu) }
                 }
-            }
+            } }
         }
         traverse("in", RatingRange())
         assertEquals("Day 19.2 v1", if (isExample) 167_409_079_868_000 else 121_158_073_425_385, volume)
 
         // Part 2 v2: more scalable, less repeated code, but less efficient and more complex
-        volume = 0L
-        fun traverse2(id: String, rng: MutableMap<Char, Pair<Int, Int>>) {
-            if (id == "A") { volume += rng.values.fold(1L) { vol, (l, u) -> vol * (u - l + 1) } ; return }
-            if (id == "R") return
+        fun traverse2(id: String, rng: MutableMap<Char, Pair<Int, Int>>): Long {
+            if (id == "A") return rng.values.fold(1L) { vol, (l, u) -> vol * (u - l + 1) }
+            if (id == "R") return 0
+            var v = 0L
             for (rule in workflows[id]!!) { when {
-                rule.cat == null -> traverse2(rule.action, rng)
+                rule.cat == null -> v += traverse2(rule.action, rng)
                 rule.comp == '<' -> {
-                    traverse2(rule.action, rng.toMutableMap().also {
+                    v += traverse2(rule.action, rng.toMutableMap().also {
                         it[rule.cat] = with (it[rule.cat]!!) { copy(second = min(rule.value - 1, second)) }
                     })
                     rng[rule.cat] = with (rng[rule.cat]!!) { copy(first = max(rule.value, first)) }
                 }
                 rule.comp == '>' -> {
-                    traverse2(rule.action, rng.toMutableMap().also {
+                    v += traverse2(rule.action, rng.toMutableMap().also {
                         it[rule.cat] = with (it[rule.cat]!!) { copy(first = max(rule.value + 1, first)) }
                     })
                     rng[rule.cat] = with (rng[rule.cat]!!) { copy(second = min(rule.value, second)) }
                 }
             } }
+            return v
         }
-        traverse2("in", mutableMapOf('a' to (1 to 4000), 'm' to (1 to 4000), 's' to (1 to 4000), 'x' to (1 to 4000)))
-        assertEquals("Day 19.2 v2", if (isExample) 167_409_079_868_000 else 121_158_073_425_385, volume)
+        val vol2 = traverse2("in", mutableMapOf('a' to (1 to 4000), 'm' to (1 to 4000), 's' to (1 to 4000), 'x' to (1 to 4000)))
+        assertEquals("Day 19.2 v2", if (isExample) 167_409_079_868_000 else 121_158_073_425_385, vol2)
+    }
+
+    @Test
+    fun day20() {
+
     }
 }
