@@ -449,7 +449,7 @@ class AdventOfCode2023 : AdventBase(2023) {
         val sum = input.sumOf { (s, g) -> Row(s, g).count() }
         assertEquals("Day 12.1", 6488, sum)
 
-        val input2 = input.map { (s, g) -> 5.let { List(it) {s}.joinToString("?") to List(it) {g}.flatten() } }
+        val input2 = input.map { (s, g) -> List(5) { s }.joinToString("?") to List(5) { g }.flatten() }
         val sum2 = input2.sumOf{ (s, g) -> Row(s, g).count() }
         assertEquals("Day 12.2", 815364548481, sum2 )
     }
@@ -745,6 +745,70 @@ class AdventOfCode2023 : AdventBase(2023) {
 
     @Test
     fun day20() {
+        val input = getInput(20)
+        abstract class Module(open val dest: List<String>) { abstract fun pulse(from: String, high: Boolean): List<Boolean> }
+        data class FlipFlop(override val dest: List<String>, var on: Boolean = false) : Module(dest) {
+            override fun pulse(from: String, high: Boolean): List<Boolean> {
+                if (high) return emptyList()
+                on = !on
+                return listOf(on)
+            }
+        }
+        data class Conjunction(override val dest: List<String>, var lastIn: MutableMap<String, Boolean> = mutableMapOf()) : Module(dest) {
+            override fun pulse(from: String, high: Boolean): List<Boolean> {
+                lastIn[from] = high
+                return listOf(!lastIn.values.all { it })
+            }
+        }
+        data class Broadcast(override val dest: List<String>) : Module(dest) {
+            override fun pulse(from: String, high: Boolean) = listOf(high)
+        }
+
+        val inputs = mutableMapOf<String, MutableList<String>>()
+        val modules = input.associate { with (Scanner(it).useDelimiter("[%& ->,]+")) {
+            val id = next()
+            val dest = asSequence().toList()
+            dest.forEach { inputs.putIfAbsent(it, mutableListOf()) ; inputs[it]?.add(id) }
+            id to when (it.first()) { '&' -> Conjunction(dest) ; '%' -> FlipFlop(dest) ; else -> Broadcast(dest) }
+        } }
+        modules.filter { it.value is Conjunction }.forEach {
+            inputs[it.key]!!.associateWithTo((it.value as Conjunction).lastIn) { false }
+        }
+
+        val pulseQueue = mutableListOf<Triple<String, String, Boolean>>()
+        var numLow = 0L
+        var numHigh = 0L
+        data class HistoryItem(val from: String, val to: String, val high: Boolean, val fromState: String)
+        val pulseHistory = mutableListOf<HistoryItem>()
+        fun push(from: String, to: String, high: Boolean) = (from to to to3 high)
+            .let { pulseQueue.add(it) ; pulseHistory.add(HistoryItem(from, to, high, modules[from].toString())) }
+            .also { if (high) ++numHigh else ++numLow }
+        fun pop() = pulseQueue.removeFirstOrNull()
+
+        fun button() {
+            push("button", "broadcaster", false)
+            generateSequence { pop() }.forEach { (from, to, high) ->
+                val m = modules[to] ?: return@forEach
+                m.pulse(from, high).forEach { pulse -> m.dest.forEach { next -> push(to, next, pulse) } }
+            }
+        }
+
+        repeat(1000) { button() }
+        val res = numHigh * numLow
+        assertEquals("Day 20.1", if (isExample) 11687500 else 807069600, res)
+
+        fun reset() {
+            numHigh = 0
+            numLow = 0
+            writeFile("day20.2-pulsehistory.txt", pulseHistory.joinToString("\n") { (f, t, h, s) -> "$f - $t: $h - $s" })
+            pulseHistory.clear()
+            modules.values.forEach { when (it) {
+                is FlipFlop -> it.on = false
+                is Conjunction -> it.lastIn.replaceAll { _, _ -> false }
+            } }
+        }
+        reset()
+        repeat(10_000) { button() }
 
     }
 }
