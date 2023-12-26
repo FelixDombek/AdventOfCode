@@ -690,5 +690,55 @@ class AdventOfCode2023 : AdventBase(2023) {
             }
         val sum = parts.sumOf { apply(it, "in") }
         assertEquals("Day 19.1", if (isExample) 19114 else 348378, sum)
+
+        // Part 2 v1: simpler, but more repetition
+        data class RatingRange(var al: Int = 1, var ml: Int = 1, var sl: Int = 1, var xl: Int = 1,
+                               var au: Int = 4000, var mu: Int = 4000, var su: Int = 4000, var xu: Int = 4000) {
+            fun volume() = (au - al + 1L) * (mu - ml + 1L) * (su - sl + 1L) * (xu - xl + 1L)
+        }
+        var volume = 0L
+        fun traverse(id: String, rng: RatingRange) {
+            if (id == "A") { volume += rng.volume() ; return }
+            if (id == "R") return
+            for (rule in workflows[id]!!) {
+                if (rule.cat == null) traverse(rule.action, rng)
+                else when (rule.cat to rule.comp!!) {
+                    'a' to '<' -> { traverse(rule.action, rng.copy(au = min(rule.value - 1, rng.au))) ; rng.al = max(rule.value, rng.al) }
+                    'a' to '>' -> { traverse(rule.action, rng.copy(al = max(rule.value + 1, rng.al))) ; rng.au = min(rule.value, rng.au) }
+                    'm' to '<' -> { traverse(rule.action, rng.copy(mu = min(rule.value - 1, rng.mu))) ; rng.ml = max(rule.value, rng.ml) }
+                    'm' to '>' -> { traverse(rule.action, rng.copy(ml = max(rule.value + 1, rng.ml))) ; rng.mu = min(rule.value, rng.mu) }
+                    's' to '<' -> { traverse(rule.action, rng.copy(su = min(rule.value - 1, rng.su))) ; rng.sl = max(rule.value, rng.sl) }
+                    's' to '>' -> { traverse(rule.action, rng.copy(sl = max(rule.value + 1, rng.sl))) ; rng.su = min(rule.value, rng.su) }
+                    'x' to '<' -> { traverse(rule.action, rng.copy(xu = min(rule.value - 1, rng.xu))) ; rng.xl = max(rule.value, rng.xl) }
+                    'x' to '>' -> { traverse(rule.action, rng.copy(xl = max(rule.value + 1, rng.xl))) ; rng.xu = min(rule.value, rng.xu) }
+                }
+            }
+        }
+        traverse("in", RatingRange())
+        assertEquals("Day 19.2 v1", if (isExample) 167_409_079_868_000 else 121_158_073_425_385, volume)
+
+        // Part 2 v2: more scalable, less repeated code, but less efficient and more complex
+        volume = 0L
+        fun traverse2(id: String, rng: MutableMap<Char, Pair<Int, Int>>) {
+            if (id == "A") { volume += rng.values.fold(1L) { vol, (l, u) -> vol * (u - l + 1) } ; return }
+            if (id == "R") return
+            for (rule in workflows[id]!!) { when {
+                rule.cat == null -> traverse2(rule.action, rng)
+                rule.comp == '<' -> {
+                    traverse2(rule.action, rng.toMutableMap().also {
+                        it[rule.cat] = with (it[rule.cat]!!) { copy(second = min(rule.value - 1, second)) }
+                    })
+                    rng[rule.cat] = with (rng[rule.cat]!!) { copy(first = max(rule.value, first)) }
+                }
+                rule.comp == '>' -> {
+                    traverse2(rule.action, rng.toMutableMap().also {
+                        it[rule.cat] = with (it[rule.cat]!!) { copy(first = max(rule.value + 1, first)) }
+                    })
+                    rng[rule.cat] = with (rng[rule.cat]!!) { copy(second = min(rule.value, second)) }
+                }
+            } }
+        }
+        traverse2("in", mutableMapOf('a' to (1 to 4000), 'm' to (1 to 4000), 's' to (1 to 4000), 'x' to (1 to 4000)))
+        assertEquals("Day 19.2 v2", if (isExample) 167_409_079_868_000 else 121_158_073_425_385, volume)
     }
 }
