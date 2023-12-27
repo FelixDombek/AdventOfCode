@@ -18,6 +18,8 @@ infix fun <A, B, C> Pair<A, B>.to3(that: C): Triple<A, B, C> = Triple(first, sec
 
 fun Any?.println() = println(this)
 
+fun Char.isHexDigit() = isDigit() || (code >= 'a'.code && code <= 'f'.code) || (code >= 'A'.code && code <= 'F'.code)
+
 fun List<String>.column(i: Int) = map { it[i] }.joinToString("")
 fun List<String>.transposed() = firstOrNull()?.indices?.map { column(it) } ?: emptyList()
 fun List<String>.hasIndices(x: Int, y: Int) = y in indices && x in first().indices

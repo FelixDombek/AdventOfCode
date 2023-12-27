@@ -149,4 +149,29 @@ class AdventOfCode2015 : AdventBase(2015) {
         val aVal2 = readWire("a")
         assertEquals("Day 7.2", 40149.toUShort(), aVal2)
     }
+
+    @Test
+    fun day8() {
+        val input = getInput(8)
+        val codeLen = input.sumOf { it.length }
+        val inMem = input.sumOf {
+            var esc = false
+            var escx1 = false
+            var escx2 = false
+            it.substring(1, it.lastIndex).count { when {
+                !esc && it == '\\' -> { esc = true ; false }
+                esc && (it == '\\' || it == '"') -> { esc = false ; true }
+                esc && it == 'x' -> { escx1 = true ; false }
+                esc && escx1 && !escx2 && it.isHexDigit() -> { escx2 = true ; false }
+                esc && escx1 && escx2 && it.isHexDigit() -> { esc = false ; escx1 = false ; escx2 = false ; true }
+                else -> true
+            } }
+        }
+        val diff = codeLen - inMem
+        assertEquals("Day 8.1", 1342, diff)
+
+        val asString = input.sumOf { it.length + it.count { it == '\\' || it == '"' } + 2 }
+        val diff2 = asString - codeLen
+        assertEquals("Day 8.2", 2074, diff2)
+    }
 }
