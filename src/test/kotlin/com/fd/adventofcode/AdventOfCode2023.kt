@@ -809,6 +809,42 @@ class AdventOfCode2023 : AdventBase(2023) {
         }
         reset()
         repeat(10_000) { button() }
+    }
 
+    @Test
+    fun day21() {
+        val garden = getInput(1021)
+        val (sx, sy) = 'S'.let { s -> garden.indexOfFirst { s in it }.let { garden[it].indexOf(s) to it } }
+        val steps = 64
+        var cur = setOf(sx to sy)
+        repeat(steps) { i ->
+            val next = mutableSetOf<Pair<Int, Int>>()
+            for (plot in cur) {
+                listOf(-1 to 0, 1 to 0, 0 to -1, 0 to 1).forEach {
+                    val (newX, newY) = (plot.first to plot.second) + it
+                    if (garden.hasIndices(newX, newY) && garden[newY][newX] != '#') next.add(newX to newY)
+                }
+            }
+            cur = next
+        }
+
+        assertEquals("Day 21.1", if (isExample) 42 else 3770, cur.size)
+
+        fun wrapCoord(c: Int) = if (c >= 0) c % garden.size else (garden.size - (-c % garden.size)) % garden.size
+        fun tileAt(x: Int, y: Int) = garden[wrapCoord(y)][wrapCoord(x)]
+        var cur2 = setOf(sx to sy)
+        val steps2 = 500//26501365
+        repeat(steps2) { i ->
+            val next = mutableSetOf<Pair<Int, Int>>()
+            for (plot in cur2) {
+                listOf(-1 to 0, 1 to 0, 0 to -1, 0 to 1).forEach {
+                    val (newX, newY) = (plot.first to plot.second) + it
+                    if (tileAt(newX, newY) != '#') next.add(newX to newY)
+                }
+            }
+            cur2 = next
+        }
+
+        assertEquals("Day 21.2", if (isExample) 0 else 3770, cur2.size)
     }
 }
