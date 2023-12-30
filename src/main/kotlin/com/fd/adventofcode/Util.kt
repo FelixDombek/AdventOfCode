@@ -1,6 +1,7 @@
 package com.fd.adventofcode
 
 import java.io.File
+import java.security.MessageDigest
 import java.util.*
 import java.util.regex.Pattern
 
@@ -10,6 +11,8 @@ fun Scanner.skipAndSet(s: String) = skip(delimiter()).useDelimiter(s)
 fun Scanner.skipAndSet(p: Pattern) = skip(delimiter()).useDelimiter(p)
 
 fun writeFile(name: String, contents: String) = File(name).writeText(contents)
+fun ByteArray.toHex() = joinToString("") { byte -> "%02x".format(byte) }
+fun md5(str: String): ByteArray = MessageDigest.getInstance("MD5").digest(str.toByteArray(Charsets.UTF_8))
 
 operator fun Pair<Int, Int>.plus(rhs: Pair<Int, Int>) = first + rhs.first to second + rhs.second
 operator fun Pair<Int, Int>.minus(rhs: Pair<Int, Int>) = first - rhs.first to second - rhs.second
@@ -31,8 +34,11 @@ fun List<String>.printBoxed() {
 
 fun List<String>.toMatrix() = map { it.map { it }.toMutableList() }
 fun List<List<Char>>.toStrings() = map { it.joinToString("") }
+fun <E : Any?> List<E>.deepcopy(): List<E> = map { if (it is List<*>) (it.deepcopy() as E) else it }
+
 
 fun <E : Any?> List<List<E>>.column(i: Int) = map { it[i] }.toMutableList()
+fun <E : Any?> List<MutableList<E>>.setColumn(i: Int, col: List<E>) = col.forEachIndexed { r, v -> this[r][i] = v }
 @JvmName("transposedList")
 fun <E : Any?> List<List<E>>.transposed() = firstOrNull()?.indices?.map { column(it) } ?: emptyList()
 fun <E : Any?> List<List<E>>.rotatedLeft() = transposed().reversed()

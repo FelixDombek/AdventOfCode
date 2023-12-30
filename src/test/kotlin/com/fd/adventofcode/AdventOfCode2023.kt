@@ -669,12 +669,10 @@ class AdventOfCode2023 : AdventBase(2023) {
 
         val workflows = workflowIn.associate { with (Scanner(it).useDelimiter("[{,}]")) {
             next() to asSequence().map { with (ruleRe.matchEntire(it)!!.groups) {
-                Rule(
-                    (get("AR1") ?: get("AR2") ?: get("wf1") ?: get("wf2"))!!.value,
-                    get("cat")?.value?.single(),
-                    get("comp")?.value?.single(),
-                    get("val")?.value?.toInt() ?: 0
-                )
+                Rule((get("AR1") ?: get("AR2") ?: get("wf1") ?: get("wf2"))!!.value,
+                     get("cat")?.value?.single(),
+                     get("comp")?.value?.single(),
+                     get("val")?.value?.toInt() ?: 0)
             } }.toList()
         } }
 

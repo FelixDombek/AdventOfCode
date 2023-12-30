@@ -2,9 +2,7 @@ package com.fd.adventofcode
 
 import org.junit.Assert.assertEquals
 import org.junit.Test
-import java.security.MessageDigest
 import java.util.Scanner
-import kotlin.text.Charsets.UTF_8
 
 class AdventOfCode2015 : AdventBase(2015) {
     @Test
@@ -31,26 +29,20 @@ class AdventOfCode2015 : AdventBase(2015) {
     @Test
     fun day3() {
         val input = getString(3)
-        val visited = mutableSetOf(0 to 0)
-        input.fold(0 to 0) { pos, c ->
-            (pos + when (c) { '^' -> -1 to 0 ; 'v' -> 1 to 0 ; '<' -> 0 to -1 ; else -> 0 to 1}).also { visited.add(it) }
-        }
+        var visited = mutableSetOf(0 to 0)
+        fun update(pos: Pair<Int, Int>, c: Char) =
+            (pos + when (c) { '^' -> -1 to 0 ; 'v' -> 1 to 0 ; '<' -> 0 to -1 ; else -> 0 to 1 }).also { visited.add(it) }
+        input.fold(0 to 0) { pos, c -> update(pos, c) }
         assertEquals("Day 3.1", 2081, visited.size)
 
-        val visited2 = mutableSetOf(0 to 0)
-        input.foldIndexed((0 to 0) to (0 to 0)) { i, (s, r), c ->
-            fun update(pos: Pair<Int, Int>) =
-                (pos + when (c) { '^' -> -1 to 0 ; 'v' -> 1 to 0 ; '<' -> 0 to -1 ; else -> 0 to 1}).also { visited2.add(it) }
-            if (i % 2 == 0) update(s) to r else s to update(r)
-        }
-        assertEquals("Day 3.1", 2341, visited2.size)
+        visited = mutableSetOf(0 to 0)
+        input.foldIndexed((0 to 0) to (0 to 0)) { i, (s, r), c -> if (i % 2 == 0) update(s, c) to r else s to update(r, c) }
+        assertEquals("Day 3.2", 2341, visited.size)
     }
 
     @Test
     fun day4() {
         val input = "ckczppom"
-        fun md5(str: String): ByteArray = MessageDigest.getInstance("MD5").digest(str.toByteArray(UTF_8))
-        fun ByteArray.toHex() = joinToString(separator = "") { byte -> "%02x".format(byte) }
         val five0 = iota().first { md5("$input$it").toHex().startsWith("00000") }
         assertEquals("Day 4.1", 117946, five0)
 
