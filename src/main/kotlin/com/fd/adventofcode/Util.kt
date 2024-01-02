@@ -13,6 +13,7 @@ fun Scanner.skipAndSet(s: String) = skip(delimiter()).useDelimiter(s)
 fun Scanner.skipAndSet(p: Pattern) = skip(delimiter()).useDelimiter(p)
 
 fun writeFile(name: String, contents: String) = File(name).writeText(contents)
+fun appendFile(name: String, contents: String) = File(name).appendText(contents)
 fun ByteArray.toHex() = joinToString("") { byte -> "%02x".format(byte) }
 fun md5(str: String): ByteArray = MessageDigest.getInstance("MD5").digest(str.toByteArray(Charsets.UTF_8))
 

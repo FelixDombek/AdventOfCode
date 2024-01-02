@@ -2,9 +2,7 @@ package com.fd.adventofcode
 
 import org.junit.Assert.assertEquals
 import org.junit.Test
-import java.util.Collections
-import java.util.PriorityQueue
-import java.util.Scanner
+import java.util.*
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
@@ -428,27 +426,78 @@ class AdventOfCode2016 : AdventBase(2016) {
         fun open(dir: Char, hash: String) = hash[when (dir) { 'U' -> 0 ; 'D' -> 1 ; 'L' -> 2 ; else -> 3 }] in "bcdef"
         fun next(prev: Pair<Int, Int>, dir: Char) =
             prev + when (dir) { 'U' -> 0 to -1 ; 'D' -> 0 to 1 ; 'L' -> -1 to 0 ; else -> 1 to 0 }
-        fun step(path: String, prev: Pair<Int, Int>, dir: Char) =
-            with (next(prev, dir)) { first in 0..3 && second in 0..3 } && open(dir, md5(input + path).toHex())
         data class State(val path: String, val cur: Pair<Int, Int>)
-        fun step(q: MutableList<State>, longest: MutableList<State>) = with (q.removeFirstOrNull().let { it ?: return false }) {
-            "UDLR".filter { step(path, cur, it) }.map { State(path + it, next(cur, it)) }.forEach { (if (it.cur == 3 to 3) longest else q).add(it) }
-            true
+        fun step(s: State) = s.cur.first in 0..3 && s.cur.second in 0..3 &&
+                open(s.path.last(), md5(input + s.path.dropLast(1)).toHex())
+        fun step(q: MutableList<State>, l: MutableList<State>) = when (val s = q.removeFirstOrNull()) {
+            null -> false
+            else -> { "UDLR".map { State(s.path + it, next(s.cur, it)) }.filter { step(it) }
+                            .forEach { (if (it.cur == 3 to 3) l else q).add(it) } ; true }
         }
-        fun shortest(): String {
-            val q = mutableListOf(State("", 0 to 0))
-            val l = mutableListOf<State>()
-            while (l.isEmpty()) step(q, l)
-            return l.single().path
-        }
-        assertEquals("Day 17.1", "DDRRUDLRRD", shortest())
 
-        fun longest(): Int {
-            val q = mutableListOf(State("", 0 to 0))
-            val l = mutableListOf<State>()
-            while (step(q, l)) {}
-            return l.map { it.path.length }.max()
+        val q = mutableListOf(State("", 0 to 0))
+        val l = mutableListOf<State>()
+        while (step(q, l)) {}
+
+        val shortest = l.minBy { it.path.length }.path
+        assertEquals("Day 17.1", "DDRRUDLRRD", shortest)
+
+        val longest = l.maxBy { it.path.length }.path.length
+        assertEquals("Day 17.2", 488, longest)
+    }
+
+    @Test
+    fun day18() {
+        val first = getString(18)
+        fun next(row: String) = ".$row.".windowed(3) { if (it[0] != it[2]) '^' else '.' }.joinToString("")
+        var count = 0
+        var cur = first
+        repeat(40) { count += cur.count { it == '.' } ; cur = next(cur) }
+        assertEquals("Day 18.1", 2013, count)
+
+        var count2 = 0
+        var cur2 = first
+        repeat(400_000) { count2 += cur2.count { it == '.' } ; cur2 = next(cur2) }
+        assertEquals("Day 18.2", 20006289, count2)
+    }
+
+    @Test
+    fun day19() {
+        val elves = 3014603
+        var l = iota(1).take(elves).toList()
+        while (l.size > 1) {
+            val takes1 = l.size % 2 != 0
+            l = l.filterIndexed { i, e -> if (i == 0) !takes1 else i % 2==0 }
         }
-        assertEquals("Day 17.2", 488, longest())
+        assertEquals("Day 19.1", 1834903, l.single())
+
+        val l2 = iota(1).take(elves).toMutableList()
+        fun opposite(i: Int, size: Int) = (i + size/2) % size
+        fun step(i: Int): Int {
+            var ii = i
+            var opp = opposite(ii, l2.size)
+            if (opp < i) {
+                Collections.rotate(l2, -i)
+                ii = 0
+                opp += opposite(ii, l2.size)
+            }
+            l2.removeAt(opp)
+            return (ii + 1) % l2.size
+        }
+        var cur = 0
+        while (l2.size > 1) cur = step(cur)
+        assertEquals("Day 19.2", 1420280, l2.single())
+    }
+
+    @Test
+    fun day20() {
+        val input = getInput(20).map { it.split("-").map { it.toLong() }.let { it[0]..it[1] } }
+        fun step(u: Long): Long {
+            val nextRange = input.filter { it.first <= u && it.last > u }.maxByOrNull { it.first }
+            if (nextRange == null) return u
+            else return step(nextRange.last + 1)
+        }
+        val allowed = step(0)
+        assertEquals("Day 20.1", 1834903, allowed)
     }
 }
