@@ -492,12 +492,28 @@ class AdventOfCode2016 : AdventBase(2016) {
     @Test
     fun day20() {
         val input = getInput(20).map { it.split("-").map { it.toLong() }.let { it[0]..it[1] } }
-        fun step(u: Long): Long {
+        fun nextAllowed(u: Long): Long {
             val nextRange = input.filter { it.first <= u && it.last > u }.maxByOrNull { it.first }
-            if (nextRange == null) return u
-            else return step(nextRange.last + 1)
+            return if (nextRange == null) u else nextAllowed(nextRange.last + 1)
         }
-        val allowed = step(0)
-        assertEquals("Day 20.1", 1834903, allowed)
+        val allowed = nextAllowed(0)
+        assertEquals("Day 20.1", 17348574, allowed)
+
+        fun nextBlocked(u: Long): Long {
+            return input.map { it.first }.filter { it >= u }.minOrNull() ?: (UInt.MAX_VALUE.toLong() + 1)
+        }
+        var count = 0L
+        var cur = 0L
+        while (cur <= UInt.MAX_VALUE.toLong()) {
+            val a = nextAllowed(cur)
+            cur = nextBlocked(a)
+            count += (cur - a)
+        }
+        assertEquals("Day 20.2", 104, count)
+    }
+
+    @Test
+    fun day21() {
+
     }
 }
