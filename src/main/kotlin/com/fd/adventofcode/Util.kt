@@ -4,6 +4,8 @@ import java.io.File
 import java.security.MessageDigest
 import java.util.*
 import java.util.regex.Pattern
+import kotlin.math.max
+import kotlin.math.min
 
 data class Point(val x: Long, val y: Long)
 fun Scanner.findAllInt() = asSequence().map { it.toInt() }.toList()
@@ -45,6 +47,16 @@ fun <E : Any?> List<List<E>>.rotatedLeft() = transposed().reversed()
 fun <E : Any?> List<List<E>>.rotatedRight() = reversed().transposed()
 fun <E : Any?> List<List<E>>.rotated180() = rotatedLeft().rotatedLeft()
 
+fun <T> Sequence<T>.repeat(prefix: Sequence<T> = emptySequence()) = sequence { yieldAll(prefix) ; while (true) yieldAll(this@repeat) }
+
+fun <T> zipAll(seq: Collection<Sequence<T>>): Sequence<List<T>> {
+    return sequence {
+        val its = seq.map { it.iterator() }
+        while (its.all { it.hasNext() }) yield(its.map { it.next() })
+    }
+}
+fun <T> zipAll(vararg seq: Sequence<T>): Sequence<List<T>> = zipAll(seq.toList())
+
 fun Int.toCircled() = when (this) {
     0 -> '⓪'
     in 1..20 -> ('①'.code + this - 1).toChar()
@@ -62,3 +74,12 @@ fun Int.toSuperscript() = when (this) { 0->'⁰';1->'¹';2->'²';3->'³';4->'⁴
 fun Int.toSubscript() = when (this) { 0->'₀';1->'₁';2->'₂';3->'₃';4->'₄';5->'₅';6->'₆';7->'₇';8->'₈';9->'₉';else->throw IllegalArgumentException() }
 
 fun iota(start: Int = 0) = generateSequence(start) { it + 1 }
+fun Int.modulo(divisor: Int) = if (this >= 0) this % divisor else (divisor - (-this % divisor)) % divisor
+fun Long.modulo(divisor: Long) = if (this >= 0) this % divisor else (divisor - (-this % divisor)) % divisor
+fun lcm(a: Long, b: Long): Long {
+    val larger = max(a, b)
+    val smaller = min(a, b)
+    val maxLcm = a * b
+    return LongProgression.fromClosedRange(larger, maxLcm, larger).find { it % smaller == 0L }!!
+}
+fun lcm(nums: List<Long>) = nums.reduce { acc, n -> lcm(acc, n) }

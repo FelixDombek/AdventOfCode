@@ -29,4 +29,17 @@ class UtilTest : AdventBase(0) {
         assertEquals(input.toMatrix().rotatedLeft().rotatedLeft().rotatedLeft().toStrings(), rotated)
         assertEquals(listOf("da", "eb", "fc"), rotated)
     }
+
+    @Test
+    fun moduloTest() {
+        assertEquals(24, (-3).modulo(27))
+    }
+
+    @Test
+    fun zipAllTest() {
+        val s = sequenceOf(1,2,3)
+        val s2 = sequenceOf(3,4,5,6)
+
+        assertEquals(listOf(listOf(1,3), listOf(2,4), listOf(3,5)), zipAll(s, s2).toList())
+    }
 }

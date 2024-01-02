@@ -285,14 +285,6 @@ class AdventOfCode2023 : AdventBase(2023) {
         val circles2 = nodes.map { steps(it) { n, _ -> n.endsWith('Z') }.toLong() }
         assertEquals("$circles", "$circles2")
 
-        fun lcm(a: Long, b: Long): Long {
-            val larger = max(a, b)
-            val smaller = min(a, b)
-            val maxLcm = a * b
-            return LongProgression.fromClosedRange(larger, maxLcm, larger).find { it % smaller == 0L }!!
-        }
-        fun lcm(nums: List<Long>) = nums.reduce { acc, n -> lcm(acc, n) }
-
         val count2 = lcm(circles2)
         assertEquals("Day 8.2", 10818234074807, count2)
     }

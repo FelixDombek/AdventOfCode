@@ -221,7 +221,7 @@ class AdventOfCode2016 : AdventBase(2016) {
         assertEquals("Day 10.1", "56", botFor17and61)
 
         val out = bots["output 0"]!!.hold.single() * bots["output 1"]!!.hold.single() * bots["output 2"]!!.hold.single()
-        assertEquals("Day 10.2", 1, out)
+        assertEquals("Day 10.2", 7847, out)
     }
 
     @Test
@@ -244,14 +244,14 @@ class AdventOfCode2016 : AdventBase(2016) {
 
         fun newFloors(floors: List<List<String>>, newFloor: List<String>, elevator: Int)
             = floors.take(elevator) + listOf(newFloor) + floors.drop(elevator + 1)
-        fun newState(state: State, elems: List<String>, diffElevator: Int) = State(
+        fun newState(s: State, elems: List<String>, diffElevator: Int) = State(
             newFloors(
-                newFloors(state.floors, state.floors[state.elevator].filter { it !in elems }, state.elevator),
-                state.floors[state.elevator + diffElevator] + elems,
-                state.elevator + diffElevator),
-            state.elevator + diffElevator,
-            state.steps + 1,
-            state)
+                newFloors(s.floors, s.floors[s.elevator].filter { it !in elems }, s.elevator),
+                s.floors[s.elevator + diffElevator] + elems,
+                s.elevator + diffElevator),
+            s.elevator + diffElevator,
+            s.steps + 1,
+            s)
 
         val seen = mutableSetOf<State>()
         fun genNext(s: State): List<State>? { with (s.floors[s.elevator]) {
@@ -353,5 +353,102 @@ class AdventOfCode2016 : AdventBase(2016) {
         var cur2 = setOf(1 to 1)
         repeat(50) { cur2 = step(cur2) ; visited.addAll(cur2) }
         assertEquals("Day 13.2", 141, visited.size)
+    }
+
+    @Test
+    fun day14() {
+        val salt = /*"abc"*/"zpqevtbw"
+        var i = 0
+        val tripletRe = Regex("([0-9a-f])\\1\\1")
+        val window = 1001
+        generateSequence { md5("$salt${i++}").toHex() }.windowed(window).filter { list ->
+            tripletRe.find(list.first()).let { m -> m != null &&
+                    list.subList(1, list.size).find { m.value.first().toString().repeat(5) in it } != null }
+        }.take(64).forEach { }
+        assertEquals("Day 14.1", 16106, i - window)
+
+        fun stretchedMD5(s: String) = (0..2016).fold(s) { h, _ -> md5(h).toHex() }
+        i = 0
+        generateSequence { stretchedMD5("$salt${i++}") }.windowed(window).filter { list ->
+            tripletRe.find(list.first()).let { m -> m != null &&
+                    list.subList(1, list.size).find { m.value.first().toString().repeat(5) in it } != null }
+        }.take(64).forEach { it.first().println() }
+        assertEquals("Day 14.2", 22423, i - window)
+    }
+
+    @Test
+    fun day15() {
+        fun disc(num: Int, slots: Int, offset: Int) = (slots - offset - num).toLong() to slots.toLong()
+        val input = getInput(15).map { Scanner(it).useDelimiter("\\D+").findAllInt().let { disc(it[0], it[1], it[3]) } }
+
+        // (a) the simple way
+        fun seq(off: Int, p: Int) = "|${"x".repeat(p-1)}".asSequence().repeat("o".repeat(off.modulo(p)).asSequence())
+        val zipSeq = zipAll(input.map { seq(it.first.toInt(), it.second.toInt()) })
+        val allPipes = zipSeq.indexOfFirst { it.all { it == '|' } }
+        assertEquals("Day 15.1a", 148737, allPipes)
+
+        fun findOffsetAndPeriod(aoff: Long, ap: Long, boff: Long, bp: Long): Pair<Long, Long> {
+            val (start, inc, diff, divide) = if (ap > bp) listOf(aoff, ap, boff, bp) else listOf(boff, bp, aoff, ap)
+            var offset = start
+            while ((offset - diff).modulo(divide) != 0L) {
+                offset += inc
+            }
+            // period calculation, not needed but may come in handy later
+            val period = lcm(ap, bp)
+            if (offset == period) offset = 0
+            return offset to period
+        }
+        val (offset, _) = input.reduce { (accOff, accP), (inOff, inP) -> findOffsetAndPeriod(accOff, accP, inOff, inP) }
+        assertEquals("Day 15.1b", 148737, offset)
+
+        val input2 = input + disc(7, 11, 0)
+        val (offset2, _) = input2.reduce { (accOff, accP), (inOff, inP) -> findOffsetAndPeriod(accOff, accP, inOff, inP) }
+        assertEquals("Day 15.2", 2353212, offset2)
+    }
+
+    @Test
+    fun day16() {
+        fun dragoncurve(a: String) = "${a}0${a.reversed().replace(Regex("[01]")) { m -> if (m.value.single() == '0') "1" else "0" }}"
+        fun checksum(s: String) = iota().scan(s) { cs, _ ->
+            cs.windowedSequence(2, 2) { if (it.first() == it.last()) '1' else '0' }.joinToString("")
+        }.first { it.length % 2 != 0 }
+        fun fillcheck(s: String, l: Int) = checksum(iota().scan(s) { fill, _ -> dragoncurve(fill) }.first { it.length >= l }.take(l))
+
+        val input = "01111010110010011"
+        val targetLen = 272
+        assertEquals("Day 16.1", "00100111000101111", fillcheck(input, targetLen))
+
+        val targetLen2 = 35651584
+        assertEquals("Day 16.2", "11101110011100110", fillcheck(input, targetLen2))
+    }
+
+    @Test
+    fun day17() {
+        val input = "pslxynzg"
+        fun open(dir: Char, hash: String) = hash[when (dir) { 'U' -> 0 ; 'D' -> 1 ; 'L' -> 2 ; else -> 3 }] in "bcdef"
+        fun next(prev: Pair<Int, Int>, dir: Char) =
+            prev + when (dir) { 'U' -> 0 to -1 ; 'D' -> 0 to 1 ; 'L' -> -1 to 0 ; else -> 1 to 0 }
+        fun step(path: String, prev: Pair<Int, Int>, dir: Char) =
+            with (next(prev, dir)) { first in 0..3 && second in 0..3 } && open(dir, md5(input + path).toHex())
+        data class State(val path: String, val cur: Pair<Int, Int>)
+        fun step(q: MutableList<State>, longest: MutableList<State>) = with (q.removeFirstOrNull().let { it ?: return false }) {
+            "UDLR".filter { step(path, cur, it) }.map { State(path + it, next(cur, it)) }.forEach { (if (it.cur == 3 to 3) longest else q).add(it) }
+            true
+        }
+        fun shortest(): String {
+            val q = mutableListOf(State("", 0 to 0))
+            val l = mutableListOf<State>()
+            while (l.isEmpty()) step(q, l)
+            return l.single().path
+        }
+        assertEquals("Day 17.1", "DDRRUDLRRD", shortest())
+
+        fun longest(): Int {
+            val q = mutableListOf(State("", 0 to 0))
+            val l = mutableListOf<State>()
+            while (step(q, l)) {}
+            return l.map { it.path.length }.max()
+        }
+        assertEquals("Day 17.2", 488, longest())
     }
 }
