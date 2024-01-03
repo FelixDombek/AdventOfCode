@@ -2,6 +2,7 @@ package com.fd.adventofcode
 
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import java.io.File
 import java.util.*
 import kotlin.math.abs
 import kotlin.math.max
@@ -464,14 +465,14 @@ class AdventOfCode2016 : AdventBase(2016) {
     @Test
     fun day19() {
         val elves = 3014603
-        var l = iota(1).take(elves).toList()
+        var l = (1..elves).toList()
         while (l.size > 1) {
             val takes1 = l.size % 2 != 0
             l = l.filterIndexed { i, e -> if (i == 0) !takes1 else i % 2==0 }
         }
         assertEquals("Day 19.1", 1834903, l.single())
 
-        val l2 = iota(1).take(elves).toMutableList()
+        val l2 = (1..elves).toMutableList()
         fun opposite(i: Int, size: Int) = (i + size/2) % size
         fun step(i: Int): Int {
             var ii = i
@@ -479,7 +480,7 @@ class AdventOfCode2016 : AdventBase(2016) {
             if (opp < i) {
                 Collections.rotate(l2, -i)
                 ii = 0
-                opp += opposite(ii, l2.size)
+                opp = opposite(ii, l2.size)
             }
             l2.removeAt(opp)
             return (ii + 1) % l2.size
@@ -492,16 +493,13 @@ class AdventOfCode2016 : AdventBase(2016) {
     @Test
     fun day20() {
         val input = getInput(20).map { it.split("-").map { it.toLong() }.let { it[0]..it[1] } }
-        fun nextAllowed(u: Long): Long {
-            val nextRange = input.filter { it.first <= u && it.last > u }.maxByOrNull { it.first }
-            return if (nextRange == null) u else nextAllowed(nextRange.last + 1)
-        }
+        fun nextAllowed(u: Long): Long =
+            input.filter { it.first <= u && it.last > u }.maxByOrNull { it.first }?.let { nextAllowed(it.last + 1) } ?: u
+
         val allowed = nextAllowed(0)
         assertEquals("Day 20.1", 17348574, allowed)
 
-        fun nextBlocked(u: Long): Long {
-            return input.map { it.first }.filter { it >= u }.minOrNull() ?: (UInt.MAX_VALUE.toLong() + 1)
-        }
+        fun nextBlocked(u: Long) = input.map { it.first }.filter { it >= u }.minOrNull() ?: (UInt.MAX_VALUE.toLong() + 1)
         var count = 0L
         var cur = 0L
         while (cur <= UInt.MAX_VALUE.toLong()) {
@@ -514,6 +512,56 @@ class AdventOfCode2016 : AdventBase(2016) {
 
     @Test
     fun day21() {
+        val orig = "abcdefgh"
+        val ops = getInput(21).map { it.split(" ").let { "${it[0]} ${it[1]}" to it.filter { it.length==1 } } }
 
+        fun swapPos(l: MutableList<Char>, x: Int, y: Int) { val t=l[x] ; l[x]=l[y] ; l[y]=t }
+        fun swapLetter(l: MutableList<Char>, x: Char, y: Char) = swapPos(l, l.indexOf(x), l.indexOf(y))
+        fun rotateLeft(l: MutableList<Char>, x: Int) = Collections.rotate(l, -x)
+        fun rotateRight(l: MutableList<Char>, x: Int) = Collections.rotate(l, x)
+        fun rotatePos(l: MutableList<Char>, x: Char) { val i=l.indexOf(x) ; Collections.rotate(l, 1 + i + if (i >= 4) 1 else 0) }
+        fun reversePos(l: MutableList<Char>, x: Int, y: Int) { var xx=x ; var yy=y ; while (xx < yy) swapPos(l, xx++, yy--) }
+        fun movePos(l: MutableList<Char>, x: Int, y: Int) = l.add(y, l.removeAt(x))
+
+        val pass = orig.toMutableList()
+        ops.forEach { with (it.second) { when (it.first) {
+            "swap position" -> swapPos(pass, first().toInt(), last().toInt())
+            "swap letter" -> swapLetter(pass, first().single(), last().single())
+            "rotate left" -> rotateLeft(pass, single().toInt())
+            "rotate right" -> rotateRight(pass, single().toInt())
+            "rotate based" -> rotatePos(pass, single().single())
+            "reverse positions" -> reversePos(pass, first().toInt(), last().toInt())
+            "move position" -> movePos(pass, first().toInt(), last().toInt())
+            else -> throw IllegalArgumentException(toString())
+        } } }
+        assertEquals("Day 21.1", "dbfgaehc", pass.joinToString(""))
+
+        val orig2 = "fbgdceah"
+        val pass2 = orig2.toMutableList()
+        fun rotatePosR(l: MutableList<Char>, x: Char) = Collections.rotate(l, when (l.indexOf(x)) {
+            0, 1 -> -1 ; 3 -> -2 ; 5 -> -3 ; 7 -> -4 ; 2 -> 2 ; 4 -> 1 ; else -> 0
+        })
+        ops.reversed().forEach { with (it.second) { when (it.first) {
+            "swap position" -> swapPos(pass2, first().toInt(), last().toInt())
+            "swap letter" -> swapLetter(pass2, first().single(), last().single())
+            "rotate left" -> rotateRight(pass2, single().toInt())
+            "rotate right" -> rotateLeft(pass2, single().toInt())
+            "rotate based" -> rotatePosR(pass2, single().single())
+            "reverse positions" -> reversePos(pass2, first().toInt(), last().toInt())
+            "move position" -> movePos(pass2, last().toInt(), first().toInt())
+            else -> throw IllegalArgumentException(toString())
+        } } }
+
+        assertEquals("Day 21.2", "aghfcdeb", pass2.joinToString(""))
+    }
+
+    @Test
+    fun day22() {
+        // Filesystem              Size  Used  Avail  Use%
+        // /dev/grid/node-x0-y0     85T   72T    13T   84%
+        val X=0 ; val Y=1 ; val SIZE=2 ; val USED=3 ; val AVAIL=4 ; val USEPERC=5
+        val nodes = getInput(22).drop(2).map { Scanner(it).useDelimiter("\\D+").findAllInt() }
+        val pairs = nodes.sumOf { b -> nodes.filter { a -> b != a && a[USED] != 0 && a[USED] <= b[AVAIL] }.count() }
+        assertEquals("Day 22.1", 946, pairs)
     }
 }
