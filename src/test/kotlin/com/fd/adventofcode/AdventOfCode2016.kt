@@ -2,7 +2,6 @@ package com.fd.adventofcode
 
 import org.junit.Assert.assertEquals
 import org.junit.Test
-import java.io.File
 import java.util.*
 import kotlin.math.abs
 import kotlin.math.max
@@ -539,7 +538,7 @@ class AdventOfCode2016 : AdventBase(2016) {
         val orig2 = "fbgdceah"
         val pass2 = orig2.toMutableList()
         fun rotatePosR(l: MutableList<Char>, x: Char) = Collections.rotate(l, when (l.indexOf(x)) {
-            0, 1 -> -1 ; 3 -> -2 ; 5 -> -3 ; 7 -> -4 ; 2 -> 2 ; 4 -> 1 ; else -> 0
+            0, 1 -> -1 ; 2 -> 2 ; 3 -> -2 ; 4 -> 1 ; 5 -> -3 ; 6 -> 0 ; else -> -4
         })
         ops.reversed().forEach { with (it.second) { when (it.first) {
             "swap position" -> swapPos(pass2, first().toInt(), last().toInt())
@@ -563,5 +562,34 @@ class AdventOfCode2016 : AdventBase(2016) {
         val nodes = getInput(22).drop(2).map { Scanner(it).useDelimiter("\\D+").findAllInt() }
         val pairs = nodes.sumOf { b -> nodes.filter { a -> b != a && a[USED] != 0 && a[USED] <= b[AVAIL] }.count() }
         assertEquals("Day 22.1", 946, pairs)
+    }
+
+    @Test
+    fun day23() {
+        var ops = getInput(23).map { it.split(" ").toMutableList() }
+        fun isReg(s: String) = s.first() in 'a'..'d'
+        fun toReg(s: String) = if (isReg(s)) s.first() - 'a' else throw IllegalStateException("")
+        fun calc(reg: MutableList<Int>): List<Int> {
+            var pc = 0
+            while (pc in ops.indices) { with (ops[pc]) { try {
+                when (get(0)) {
+                "cpy" -> reg[toReg(get(2))] = if (isReg(get(1))) reg[toReg(get(1))] else get(1).toInt()
+                "inc" -> ++reg[toReg(get(1))]
+                "dec" -> --reg[toReg(get(1))]
+                "jnz" -> if (isReg(get(1)) && reg[toReg(get(1))] != 0 || !isReg(get(1)) && get(1).toInt() != 0)
+                    pc += ((if (isReg(get(2))) reg[toReg(get(2))] else get(2).toInt()) - 1) else {}
+                "tgl" -> { val op = ops[pc + reg[toReg(get(1))]] ; when {
+                    op.size == 2 && op[0] == "inc" -> op[0] = "dec"
+                    op.size == 2 -> op[0] = "inc"
+                    op[0] == "jnz" -> op[0] = "cpy"
+                    else -> op[0] = "jnz"
+                } }
+                else -> throw IllegalStateException("???")
+            } } catch (_: Exception) { } }.also { ++pc } }
+            return reg
+        }
+        assertEquals("Day 23.1", 11004, calc(mutableListOf(7,0,0,0))[0])
+        ops = getInput(23).map { it.split(" ").toMutableList() }
+        assertEquals("Day 23.2", 479007564, calc(mutableListOf(12,0,0,0))[0])
     }
 }
