@@ -5,5 +5,5 @@ My solutions to the awesome [Advent of Code](https://adventofcode.com/) puzzles,
 The input files are encrypted with [git-crypt](https://github.com/AGWA/git-crypt) ([tutorial](https://aoc.just2good.co.uk/python/encrypting)), your results for your input will be different.
 
 ## Puzzle solutions
- - 2023: [AdventOfCode2023.kt](src/test/kotlin/com/fd/adventofcode/AdventOfCode2023.kt)
- - 2024: [AdventOfCode2024.kt](src/test/kotlin/com/fd/adventofcode/AdventOfCode2024.kt)
+ - [2015–2024](src/test/kotlin/com/fd/adventofcode/)
+ - [AdventOfCode2024.kt](src/test/kotlin/com/fd/adventofcode/AdventOfCode2024.kt)
