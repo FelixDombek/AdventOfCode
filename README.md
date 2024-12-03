@@ -6,4 +6,4 @@ The input files are encrypted with [git-crypt](https://github.com/AGWA/git-crypt
 
 ## Puzzle solutions
  - 2023: [AdventOfCode2023.kt](src/test/kotlin/com/fd/adventofcode/AdventOfCode2023.kt)
- - 2023: [AdventOfCode2024.kt](src/test/kotlin/com/fd/adventofcode/AdventOfCode2024.kt)
+ - 2024: [AdventOfCode2024.kt](src/test/kotlin/com/fd/adventofcode/AdventOfCode2024.kt)
