@@ -1,5 +1,5 @@
 plugins {
-    kotlin("jvm") version "2.0.0-Beta2"
+    kotlin("jvm") version "2.1.0"
     scala
 }
 
@@ -21,7 +21,7 @@ tasks {
     }
     withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
         kotlinOptions {
-            jvmTarget = "17"
+            jvmTarget = "21"
         }
     }
 }
