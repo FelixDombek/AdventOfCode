@@ -160,13 +160,13 @@ class AdventOfCode2024 : AdventBase(2024) {
                 return 1
             }
         }
-
         val updates = input[1].split("\n").map { Scanner(it).useDelimiter(",").findAllInt().map { Page(it) } }
+
         val validMiddles = updates.filter { it == it.sorted() }.map { it[it.size/2] }
         val sum = validMiddles.sumOf { it.num }
         assertEquals("Day 5.1", 5964, sum)
 
-        val validatedMiddles = updates.filter { it != it.sorted() }.map { it.sorted()[it.size/2] }
+        val validatedMiddles = updates.mapNotNull { with (it.sorted()) { if (it != this) this[size/2] else null } }
         val sum2 = validatedMiddles.sumOf { it.num }
         assertEquals("Day 5.2", 4719, sum2)
     }
