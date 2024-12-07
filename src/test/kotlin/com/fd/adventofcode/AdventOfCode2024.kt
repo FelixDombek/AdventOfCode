@@ -228,7 +228,7 @@ class AdventOfCode2024 : AdventBase(2024) {
                 else -> break
             }
         }
-        val visited = matrix.sumOf { it.count { c -> c == 'X' } }
+        val visited = matrix.sumOf { it.count { it == 'X' } }
         assertEquals("Day 6.1", 4647, visited)
         //assertEquals("Day 6.1", 41, visited)
 
@@ -237,7 +237,7 @@ class AdventOfCode2024 : AdventBase(2024) {
         fun dir2bits(dir: Char) = when (dir) { '^' -> 1 ; 'v' -> 2 ; '<' -> 4 ; '>' -> 8 ; else -> 0 }
         fun setDir(dir: Char, orig: Char): Char = (orig.code or dir2bits(dir)).toChar()
         fun hasDir(dir: Char, orig: Char): Boolean = (orig.code and dir2bits(dir)) != 0
-        fun findloop(mat: List<MutableList<Char>>, x: Int, y: Int, d: Char): Boolean {
+        fun findLoop(mat: List<MutableList<Char>>, x: Int, y: Int, d: Char): Boolean {
             var cx = x
             var cy = y
             var dir = d
@@ -263,7 +263,7 @@ class AdventOfCode2024 : AdventBase(2024) {
                     dir = mat[sy][sx]
                     mat[sy][sx] = '@'
                     mat[y][x] = '#'
-                    if (findloop(mat, sx, sy, dir)) ++possible
+                    if (findLoop(mat, sx, sy, dir)) ++possible
                 }
             }
         }
