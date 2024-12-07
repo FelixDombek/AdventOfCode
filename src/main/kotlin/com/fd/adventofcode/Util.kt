@@ -9,6 +9,7 @@ import kotlin.math.min
 
 data class Point(val x: Long, val y: Long)
 fun Scanner.findAllInt() = asSequence().map { it.toInt() }.toList()
+fun Scanner.findAllLong() = asSequence().map { it.toLong() }.toList()
 fun Scanner.skipAndSet(s: String) = skip(delimiter()).useDelimiter(s)
 fun Scanner.skipAndSet(p: Pattern) = skip(delimiter()).useDelimiter(p)
 

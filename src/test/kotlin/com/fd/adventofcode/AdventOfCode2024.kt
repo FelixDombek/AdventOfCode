@@ -271,4 +271,25 @@ class AdventOfCode2024 : AdventBase(2024) {
         println("Time: ${end - start} ms")
         assertEquals("Day 6.2", 1723, possible)
     }
+
+    @Test
+    fun `day 7, bridge repair`() {
+        val input = getInput(7).map { Scanner(it).useDelimiter(": | ").findAllLong() }
+        fun recurse(target: Long, numbers: List<Long>, acc: Long? = null): Boolean {
+            if (numbers.isEmpty()) return acc == target
+            return recurse(target, numbers.drop(1), (acc ?: 0) + numbers.first()) ||
+                    recurse(target, numbers.drop(1), (acc ?: 1) * numbers.first())
+        }
+        val result = input.filter { recurse(it[0], it.drop(1)) }.sumOf { it[0] }
+        assertEquals("Day 7.1", 932137732557, result)
+
+        fun recurse2(target: Long, numbers: List<Long>, acc: Long? = null): Boolean {
+            if (numbers.isEmpty()) return acc == target
+            return recurse2(target, numbers.drop(1), (acc ?: 0) + numbers.first()) ||
+                    recurse2(target, numbers.drop(1), (acc ?: 1) * numbers.first()) ||
+                    recurse2(target, numbers.drop(1), ((acc?.toString() ?: "") + "${numbers.first()}").toLong())
+        }
+        val result2 = input.filter { recurse2(it[0], it.drop(1)) }.sumOf { it[0] }
+        assertEquals("Day 7.2", 932137732557, result2)
+    }
 }
