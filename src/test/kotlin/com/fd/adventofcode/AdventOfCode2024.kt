@@ -6,6 +6,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.util.Scanner
 import kotlin.math.abs
+import kotlin.text.indexOf
 
 class AdventOfCode2024 : AdventBase(2024) {
     @Test
@@ -13,10 +14,10 @@ class AdventOfCode2024 : AdventBase(2024) {
         val input = getInput(1).map { it.split(Regex("\\s+")).map { it.toLong() } }
         val left = input.map { it[0] }.sorted()
         val right = input.map { it[1] }.sorted()
-        val result = left.zip(right).map { (l, r) -> abs(r - l) }.sum()
+        val result = left.zip(right).sumOf { (l, r) -> abs(r - l) }
         assertEquals("Day 1.1", 1603498, result)
 
-        val score = left.map { l -> right.count { it == l } * l }.sum()
+        val score = left.sumOf { l -> right.count { it == l } * l }
         assertEquals("Day 1.2", 25574739, score)
     }
 
@@ -64,89 +65,30 @@ class AdventOfCode2024 : AdventBase(2024) {
     fun `day 4, ceres search`() {
         val input = getInput(4)
         fun List<List<Char>>.diag(row: Int, col: Int): Boolean = (row + 3) in indices && (col + 3) in this[0].indices && this[row][col] == 'X' && this[row+1][col+1] == 'M' && this[row+2][col+2] == 'A' && this[row+3][col+3] == 'S'
-        val normal = input.map { Regex("XMAS").findAll(it).count().also { print("$it ") } }.sum()
-        println()
-        val diagonal = (0 until input.size).map { row -> (0 until input[0].length).count { col -> input.toMatrix().diag(row, col) }.also { print("$it ") } }.sum()
-        println()
-        val backwards = input.map { Regex("SAMX").findAll(it).count().also { print("$it ") } }.sum()
-        println()
-        val up = input.transposed().map { Regex("XMAS").findAll(it).count().also { print("$it ") } }.sum()
-        println()
-        val down = input.transposed().map { Regex("SAMX").findAll(it).count().also { print("$it ") } }.sum()
-        val d2 = with (input.toMatrix().rotatedLeft()) { (0 until size).map { row -> (0 until this[0].size).count { col -> this.diag(row, col) }.also { print("$it ") } }.sum() }
-        val d3 = with (input.toMatrix().rotated180()) { (0 until size).map { row -> (0 until this[0].size).count { col -> this.diag(row, col) }.also { print("$it ") } }.sum() }
-        val d4 = with (input.toMatrix().rotatedRight()) { (0 until size).map { row -> (0 until this[0].size).count { col -> this.diag(row, col) }.also { print("$it ") } }.sum() }
 
-        assertEquals("Day 4.1", 2496, normal + diagonal + backwards + up + down + d2 + d3 + d4)
+        fun countXmas(input: List<String>) = input.sumOf { Regex("XMAS").findAll(it).count() }
 
-        fun List<List<Char>>.xmas(row: Int, col: Int): Boolean = (row+1) in indices && (row-1) in indices && (col+1) in this[0].indices && (col-1) in this[0].indices &&
-                this[row][col] == 'A' && ((this[row+1][col+1] == 'M' && this[row+1][col-1] == 'M' && this[row-1][col+1] == 'S' && this[row-1][col-1] == 'S') ||
+        val normal = countXmas(input)
+        val backwards = countXmas(input.rotated180())
+        val up = countXmas(input.rotatedRight())
+        val down = countXmas(input.rotatedLeft())
+        val diagn = countXmas(input.rotated45())
+        val diagb = countXmas(input.rotated180().rotated45())
+        val diagu = countXmas(input.rotatedRight().rotated45())
+        val diagd = countXmas(input.rotatedLeft().rotated45())
+
+        val total = normal + backwards + up + down + diagn + diagb + diagu + diagd
+        assertEquals("Day 4.1", 2496, total)
+
+        fun List<List<Char>>.xmas(row: Int, col: Int): Boolean = row in 1..<lastIndex && col in 1..<this[0].lastIndex &&
+                this[row][col] == 'A' &&
+                ((this[row+1][col+1] == 'M' && this[row+1][col-1] == 'M' && this[row-1][col+1] == 'S' && this[row-1][col-1] == 'S') ||
                 (this[row+1][col+1] == 'M' && this[row+1][col-1] == 'S' && this[row-1][col+1] == 'M' && this[row-1][col-1] == 'S') ||
                 (this[row+1][col+1] == 'S' && this[row+1][col-1] == 'S' && this[row-1][col+1] == 'M' && this[row-1][col-1] == 'M')||
                 (this[row+1][col+1] == 'S' && this[row+1][col-1] == 'M' && this[row-1][col+1] == 'S' && this[row-1][col-1] == 'M'))
 
         val xmascount = (0 until input.size).map { row -> (0 until input[0].length).count { col -> input.toMatrix().xmas(row, col) }.also { print("$it ") } }.sum()
         assertEquals("Day 4.2", 1967, xmascount)
-    }
-
-    @Test
-    fun `day 4, ceres search optimized`() {
-        val input = getInput(4)
-
-        // Helper to check diagonal matches
-        fun List<List<Char>>.hasDiagonalMatch(row: Int, col: Int, target: String): Boolean {
-            if (row + target.length > size || col + target.length > this[0].size) return false
-            return target.indices.all { this[row + it][col + it] == target[it] }
-        }
-
-        // Generic function to count matches
-        fun countMatches(input: List<List<Char>>, pattern: String, isDiagonal: Boolean = false): Int {
-            val rows = input.size
-            val cols = input[0].size
-            return (0 until rows).sumOf { row ->
-                (0 until cols).count { col ->
-                    if (isDiagonal) input.hasDiagonalMatch(row, col, pattern)
-                    else input[row].joinToString("").contains(pattern)
-                }
-            }
-        }
-
-        // Generate relevant transformations: Original, 90°, 180°, 270°
-        val transformations = listOf(
-            input.toMatrix(),
-            input.toMatrix().rotatedLeft(),
-            input.toMatrix().rotated180(),
-            input.toMatrix().rotatedRight()
-        )
-
-        // Count matches for all transformations
-        val totalMatches = transformations.sumOf { matrix ->
-            countMatches(matrix, "XMAS") + countMatches(matrix, "XMAS", isDiagonal = true)
-        }
-
-        assertEquals("Day 4.1", 2496, totalMatches)
-
-        // Part 2 - Check "XMAS" pattern logic
-        fun List<List<Char>>.isXmasPattern(row: Int, col: Int): Boolean {
-            if (row !in 1 until size - 1 || col !in 1 until this[0].size - 1) return false
-            return this[row][col] == 'A' && listOf(
-                listOf('M', 'M', 'S', 'S'),
-                listOf('M', 'S', 'M', 'S'),
-                listOf('S', 'S', 'M', 'M'),
-                listOf('S', 'M', 'S', 'M')
-            ).any { pattern ->
-                this[row + 1][col + 1] == pattern[0] &&
-                        this[row + 1][col - 1] == pattern[1] &&
-                        this[row - 1][col + 1] == pattern[2] &&
-                        this[row - 1][col - 1] == pattern[3]
-            }
-        }
-
-        val xmasCount = (0 until input.size).sumOf { row ->
-            (0 until input[0].length).count { col -> input.toMatrix().isXmasPattern(row, col) }
-        }
-
-        assertEquals("Day 4.2", 1967, xmasCount)
     }
 
     @Test
@@ -166,8 +108,167 @@ class AdventOfCode2024 : AdventBase(2024) {
         val sum = validMiddles.sumOf { it.num }
         assertEquals("Day 5.1", 5964, sum)
 
-        val validatedMiddles = updates.mapNotNull { with (it.sorted()) { if (it != this) this[size/2] else null } }
+        val validatedMiddles = updates.mapNotNull { it.sorted().run { if (it != this) this[size/2] else null } }
         val sum2 = validatedMiddles.sumOf { it.num }
         assertEquals("Day 5.2", 4719, sum2)
+    }
+
+    @Test
+    fun `day 6, guard gallivant`() {
+        val map = getInput(1006).map { it.replace(".", "@") }
+        val matrix = map.toMatrix()
+        val xlen = matrix[0].size
+        val ylen = matrix.size
+        val (sx, sy) = '^'.let { s -> map.indexOfFirst { s in it }.let { map[it].indexOf(s) to it } }
+        var (cx, cy) = sx to sy
+        var dir = matrix[sy][sx]
+        while (cx in matrix[0].indices && cy in matrix.indices) {
+            matrix[cy][cx] = 'X'
+            when (dir) {
+                '^' -> { if (cy > 0 && matrix[cy-1][cx] == '#') { dir = '>' } else { cy -= 1 } }
+                'v' -> { if (cy+1 < ylen && matrix[cy+1][cx] == '#') { dir = '<' } else { cy += 1 } }
+                '<' -> { if (cx > 0 && matrix[cy][cx-1] == '#') { dir = '^' } else { cx -= 1 } }
+                '>' -> { if (cx+1 < xlen && matrix[cy][cx+1] == '#') { dir = 'v' } else { cx += 1 } }
+                else -> break
+            }
+        }
+        val visited = matrix.sumOf { it.count { c -> c == 'X' } }
+        //assertEquals("Day 6.1", 4647, visited)
+        assertEquals("Day 6.1", 41, visited)
+
+        fun dir2bits(dir: Char) = when (dir) { '^' -> 1 ; 'v' -> 2 ; '<' -> 4 ; '>' -> 8 ; else -> 0 }
+        fun setDir(dir: Char, orig: Char): Char = (orig.code or dir2bits(dir)).toChar()
+        fun hasDir(dir: Char, orig: Char): Boolean = (orig.code and dir2bits(dir)) != 0
+        fun findloop(mat: List<MutableList<Char>>, x: Int, y: Int, d: Char): Boolean {
+            var cx = x
+            var cy = y
+            var dir = d
+            while (cx in mat[0].indices && cy in mat.indices) {
+                if (hasDir(dir, mat[cy][cx])) return true.also { println ("Loop from $x:$y to $cx:$cy - $dir") }
+                mat[cy][cx] = setDir(dir, mat[cy][cx])
+                when (dir) {
+                    '^' -> { if (cy > 0 && mat[cy-1][cx] == '#') { dir = '>' } else { cy -= 1 } }
+                    'v' -> { if (cy+1 < ylen && mat[cy+1][cx] == '#') { dir = '<' } else { cy += 1 } }
+                    '<' -> { if (cx > 0 && mat[cy][cx-1] == '#') { dir = '^' } else { cx -= 1 } }
+                    '>' -> { if (cx+1 < xlen && mat[cy][cx+1] == '#') { dir = 'v' } else { cx += 1 } }
+                    else -> break
+                }
+            }
+            return false.also { println("No loop at $x:$y - $d") }
+        }
+        fun obstacleOnRight(mat: List<MutableList<Char>>, x: Int, y: Int, d: Char): Boolean {
+            return when (d) {
+                '^' -> { mat[y].subList(x, mat[y].size).contains('#') }
+                'v' -> { mat[y].subList(0, x).contains('#') }
+                '<' -> { mat.column(x).subList(0, y).contains('#') }
+                '>' -> { mat.column(x).subList(y, mat.size).contains('#') }
+                else -> false
+            }.also { println("OonR: $x-$y - $d = $it") }
+        }
+        var mat = map.toMatrix().also { it.printBoxed('@') }
+        cx = sx
+        cy = sy
+        dir = mat[sy][sx]
+        mat[cy][cx] = setDir(dir, '@')
+        var possible = 0
+        while (cx in matrix[0].indices && cy in matrix.indices) {
+            mat[cy][cx] = setDir(dir, mat[cy][cx])
+            when (dir) {
+                '^' -> { if (cy > 0 && mat[cy-1][cx] == '#') {
+                    dir = '>'
+                    if (obstacleOnRight(mat, cx, cy, dir) && (cy != sy || cx+1 != sx) && cx+1 < xlen && mat[cy][cx+1] == '@') { if (findloop(mat.deepcopy().apply { this[cy][cx+1] = '#' ; println("^> $cx-$cy - $dir") ; this.printBoxed('@') }, cx, cy, dir)) ++possible }
+                } else {
+                    cy -= 1
+                    if (cy in matrix.indices && obstacleOnRight(mat, cx, cy, dir) && (cy-1 != sy || cx != sx) && cy-1 >= 0 && mat[cy-1][cx] == '@') { if (findloop(mat.deepcopy().apply { this[cy-1][cx] = '#' ; println("^^ $cx-$cy - $dir") ; this.printBoxed('@') }, cx, cy, dir)) ++possible }
+                } }
+                'v' -> { if (cy+1 < ylen && mat[cy+1][cx] == '#') {
+                    dir = '<'
+                    if (obstacleOnRight(mat, cx, cy, dir) && (cy != sy || cx-1 != sx) && cx-1 >= 0 && map[cy][cx-1] == '@') { if (findloop(mat.deepcopy().apply { this[cy][cx-1] = '#' ; println("v< $cx-$cy - $dir") ; this.printBoxed('@') }, cx, cy, dir)) ++possible }
+                } else {
+                    cy += 1
+                    if (cy in matrix.indices && obstacleOnRight(mat, cx, cy, dir) && (cy+1 != sy || cx != sx) && cy+1 < ylen && map[cy+1][cx] == '@') { if (findloop(mat.deepcopy().apply { this[cy+1][cx] = '#' ; println("vv $cx-$cy - $dir") ; this.printBoxed('@') }, cx, cy, dir)) ++possible }
+                } }
+                '<' -> { if (cx > 0 && mat[cy][cx-1] == '#') {
+                    dir = '^'
+                    if (obstacleOnRight(mat, cx, cy, dir) && (cy-1 != sy || cx != sx) && cy-1 >= 0&& map[cy-1][cx] == '@') { if (findloop(mat.deepcopy().apply { this[cy-1][cx] = '#' ; println("<^ $cx-$cy - $dir") ; this.printBoxed('@') }, cx, cy, dir)) ++possible }
+                } else {
+                    cx -= 1
+                    if (cx in matrix[0].indices && obstacleOnRight(mat, cx, cy, dir) && (cy != sy || cx-1 != sx) && cx-1 >= 0 && map[cy][cx-1] == '@') { if (findloop(mat.deepcopy().apply { this[cy][cx-1] = '#' ; println("<< $cx-$cy - $dir") ; this.printBoxed('@') }, cx, cy, dir)) ++possible }
+                } }
+                '>' -> { if (cx+1 < xlen && mat[cy][cx+1] == '#') {
+                    dir = 'v'
+                    if (obstacleOnRight(mat, cx, cy, dir) && (cy+1 != sy || cx != sx) && cy+1 < ylen && map[cy+1][cx] == '@') { if (findloop(mat.deepcopy().apply { this[cy+1][cx] = '#' ; println(">v $cx-$cy - $dir") ; this.printBoxed('@') }, cx, cy, dir)) ++possible }
+                } else {
+                    cx += 1
+                    if (cx in matrix[0].indices && obstacleOnRight(mat, cx, cy, dir) && (cy != sy || cx+1 != sx) && cx+1 < xlen && map[cy][cx+1] == '@') { if (findloop(mat.deepcopy().apply { this[cy][cx+1] = '#' ; println(">> $cx-$cy - $dir") ; this.printBoxed('@') }, cx, cy, dir)) ++possible }
+                } }
+                else -> break
+            }
+        }
+        assertEquals("Day 6.2", 313, possible)
+        assertEquals("Day 6.2", 6, possible)
+    }
+
+    @Test
+    fun `day 6, guard gallivant - brute force`() {
+        val map = getInput(6).map { it.replace(".", "@") }
+        val matrix = map.toMatrix()
+        val xlen = matrix[0].size
+        val ylen = matrix.size
+        val (sx, sy) = '^'.let { s -> map.indexOfFirst { s in it }.let { map[it].indexOf(s) to it } }
+        var (cx, cy) = sx to sy
+        var dir = matrix[sy][sx]
+        while (cx in matrix[0].indices && cy in matrix.indices) {
+            matrix[cy][cx] = 'X'
+            when (dir) {
+                '^' -> { if (cy > 0 && matrix[cy-1][cx] == '#') { dir = '>' } else { cy -= 1 } }
+                'v' -> { if (cy+1 < ylen && matrix[cy+1][cx] == '#') { dir = '<' } else { cy += 1 } }
+                '<' -> { if (cx > 0 && matrix[cy][cx-1] == '#') { dir = '^' } else { cx -= 1 } }
+                '>' -> { if (cx+1 < xlen && matrix[cy][cx+1] == '#') { dir = 'v' } else { cx += 1 } }
+                else -> break
+            }
+        }
+        val visited = matrix.sumOf { it.count { c -> c == 'X' } }
+        assertEquals("Day 6.1", 4647, visited)
+        //assertEquals("Day 6.1", 41, visited)
+
+        // track running time
+        val start = System.currentTimeMillis()
+        fun dir2bits(dir: Char) = when (dir) { '^' -> 1 ; 'v' -> 2 ; '<' -> 4 ; '>' -> 8 ; else -> 0 }
+        fun setDir(dir: Char, orig: Char): Char = (orig.code or dir2bits(dir)).toChar()
+        fun hasDir(dir: Char, orig: Char): Boolean = (orig.code and dir2bits(dir)) != 0
+        fun findloop(mat: List<MutableList<Char>>, x: Int, y: Int, d: Char): Boolean {
+            var cx = x
+            var cy = y
+            var dir = d
+            while (cx in mat[0].indices && cy in mat.indices) {
+                if (hasDir(dir, mat[cy][cx])) return true
+                mat[cy][cx] = setDir(dir, mat[cy][cx])
+                when (dir) {
+                    '^' -> { if (cy > 0 && mat[cy-1][cx] == '#') { dir = '>' } else { cy -= 1 } }
+                    'v' -> { if (cy+1 < ylen && mat[cy+1][cx] == '#') { dir = '<' } else { cy += 1 } }
+                    '<' -> { if (cx > 0 && mat[cy][cx-1] == '#') { dir = '^' } else { cx -= 1 } }
+                    '>' -> { if (cx+1 < xlen && mat[cy][cx+1] == '#') { dir = 'v' } else { cx += 1 } }
+                    else -> break
+                }
+            }
+            return false
+        }
+
+        var possible = 0
+        for (y in map.indices) {
+            for (x in map[0].indices) {
+                if ((x != sx || y != sy) && matrix[y][x] == 'X') {
+                    var mat = map.toMatrix()
+                    dir = mat[sy][sx]
+                    mat[sy][sx] = '@'
+                    mat[y][x] = '#'
+                    if (findloop(mat, sx, sy, dir)) ++possible
+                }
+            }
+        }
+        val end = System.currentTimeMillis()
+        println("Time: ${end - start} ms")
+        assertEquals("Day 6.2", 1723, possible)
     }
 }

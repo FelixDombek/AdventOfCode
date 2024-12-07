@@ -42,4 +42,25 @@ class UtilTest : AdventBase(0) {
 
         assertEquals(listOf(listOf(1,3), listOf(2,4), listOf(3,5)), zipAll(s, s2).toList())
     }
+
+    @Test
+    fun diagTest() {
+        val input = listOf("abc", "def", "ghi")
+        assertEquals("aei", input.diag(0))
+        assertEquals("bf", input.diag(1))
+        assertEquals("c", input.diag(2))
+
+        assertEquals("a", input.ldiag(0))
+        assertEquals("bd", input.ldiag(1))
+        assertEquals("ceg", input.ldiag(2))
+    }
+
+    @Test
+    fun rotated45Test() {
+        val input = listOf("abc", "def", "ghi")
+        assertEquals(listOf("a", "db", "gec", "hf", "i"), input.rotated45())
+
+        val input2 = listOf("abcde", "hijkl", "mnopq")
+        assertEquals(listOf("a", "hb", "mic", "njd", "oke", "pl", "q"), input2.rotated45())
+    }
 }

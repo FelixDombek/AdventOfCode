@@ -26,27 +26,51 @@ fun Any?.println() = println(this)
 
 fun Char.isHexDigit() = isDigit() || (code >= 'a'.code && code <= 'f'.code) || (code >= 'A'.code && code <= 'F'.code)
 
-fun List<String>.column(i: Int) = map { it[i] }.joinToString("")
+fun List<String>.column(i: Int): String = map { it[i] }.joinToString("")
+fun List<String>.diag(i: Int): String = mapIndexed { j, s -> if (i + j < s.length) s[i + j] else "" }.joinToString("")
+fun List<String>.ldiag(i: Int): String = mapIndexed { j, s -> if (i - j >= 0) s[i - j] else "" }.joinToString("")
 fun List<String>.transposed() = firstOrNull()?.indices?.map { column(it) } ?: emptyList()
+fun List<String>.rotatedLeft() = transposed().reversed()
+fun List<String>.rotatedRight() = reversed().transposed()
+fun List<String>.rotated180() = rotatedLeft().rotatedLeft()
+
+// rotate by 45 degrees, not padded
+fun List<String>.rotated45(): List<String> {
+    val n = size
+    val m = first().length
+    val res = mutableListOf<String>()
+    for (i in 0 until n + m - 1) {
+        val row = StringBuilder()
+        for (j in 0 until n) {
+            val x = i - j
+            if (x in 0 until m) {
+                row.append(this[j][x])
+            }
+        }
+        res.add(row.toString().reversed())
+    }
+    return res
+}
+
+
 fun List<String>.hasIndices(x: Int, y: Int) = y in indices && x in first().indices
-fun List<String>.printBoxed() {
+fun List<String>.printBoxed(subs: Char = '.') {
     println("┏${"━".repeat(firstOrNull()?.length ?: 0)}┓")
-    forEach { println("┃$it┃") }
+    forEach { println("┃${it.replace(subs, '.')}┃") }
     println("┗${"━".repeat(lastOrNull()?.length ?: 0)}┛")
 }
 
 fun List<String>.toMatrix() = map { it.map { it }.toMutableList() }
-fun List<List<Char>>.toStrings() = map { it.joinToString("") }
 fun <E : Any?> List<E>.deepcopy(): List<E> = map { if (it is List<*>) (it.deepcopy() as E) else it }
 
-
-fun <E : Any?> List<List<E>>.column(i: Int) = map { it[i] }.toMutableList()
+fun <E : Any?> List<List<E>>.column(i: Int): MutableList<E> = map { it[i] }.toMutableList()
 fun <E : Any?> List<MutableList<E>>.setColumn(i: Int, col: List<E>) = col.forEachIndexed { r, v -> this[r][i] = v }
-@JvmName("transposedList")
-fun <E : Any?> List<List<E>>.transposed() = firstOrNull()?.indices?.map { column(it) } ?: emptyList()
-fun <E : Any?> List<List<E>>.rotatedLeft() = transposed().reversed()
-fun <E : Any?> List<List<E>>.rotatedRight() = reversed().transposed()
-fun <E : Any?> List<List<E>>.rotated180() = rotatedLeft().rotatedLeft()
+fun <E : Any?> List<List<E>>.toStrings() = map { it.joinToString("") }
+@JvmName("transposedL")  fun <E : Any?> List<List<E>>.transposed()   = firstOrNull()?.indices?.map { column(it) } ?: emptyList()
+@JvmName("rotatedLeftL") fun <E : Any?> List<List<E>>.rotatedLeft()  = transposed().reversed()
+@JvmName("rotatedRightL")fun <E : Any?> List<List<E>>.rotatedRight() = reversed().transposed()
+@JvmName("rotated180L")  fun <E : Any?> List<List<E>>.rotated180()   = rotatedLeft().rotatedLeft()
+@JvmName("printBoxedL")  fun <E : Any?> List<List<E>>.printBoxed(subs: Char = '.') = toStrings().printBoxed(subs)
 
 fun <T> Sequence<T>.repeat(prefix: Sequence<T> = emptySequence()) = sequence { yieldAll(prefix) ; while (true) yieldAll(this@repeat) }
 
