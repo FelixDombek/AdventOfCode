@@ -298,7 +298,8 @@ class AdventOfCode2024 : AdventBase(2024) {
         val map = getInput(8)
         val antennas = buildMap<Char, List<Pair<Int, Int>>> {
             map.forEachIndexed { y, row ->
-                row.forEachIndexed { x, c -> if (c != '.') this[c] = (this[c] ?: emptyList()) + (x to y) }
+                row.forEachIndexed { x, c -> if (c != '.')
+                    put(c, (get(c) ?: emptyList()) + (x to y)) }
             }
             forEach { (k, v) -> if (v.size == 1) remove(k) }
         }
@@ -314,8 +315,6 @@ class AdventOfCode2024 : AdventBase(2024) {
             if (a1.first in map[0].indices && a1.second in map.indices) antinodes.add(a1)
             if (a2.first in map[0].indices && a2.second in map.indices) antinodes.add(a2)
         } } }
-
-        map.toMatrix().also { mat -> antinodes.forEach { (x, y) -> mat[y][x] = 'X' } }.printBoxed()
 
         assertEquals("Day 8.1", 323, antinodes.size)
 
@@ -336,8 +335,6 @@ class AdventOfCode2024 : AdventBase(2024) {
             }
         } } }
 
-        map.toMatrix().also { mat -> resonants.forEach { (x, y) -> mat[y][x] = 'X' } }.printBoxed()
-
-        assertEquals("Day 8.2", 0, resonants.size)
+        assertEquals("Day 8.2", 1077, resonants.size)
     }
 }
