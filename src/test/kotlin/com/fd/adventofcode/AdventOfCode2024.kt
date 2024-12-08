@@ -292,4 +292,52 @@ class AdventOfCode2024 : AdventBase(2024) {
         val result2 = input.filter { recurse2(it[0], it.drop(1)) }.sumOf { it[0] }
         assertEquals("Day 7.2", 932137732557, result2)
     }
+
+    @Test
+    fun `day 8, resonant collinearity`() {
+        val map = getInput(8)
+        val antennas = buildMap<Char, List<Pair<Int, Int>>> {
+            map.forEachIndexed { y, row ->
+                row.forEachIndexed { x, c -> if (c != '.') this[c] = (this[c] ?: emptyList()) + (x to y) }
+            }
+            forEach { (k, v) -> if (v.size == 1) remove(k) }
+        }
+
+        val antinodes = mutableSetOf<Pair<Int, Int>>()
+
+        antennas.forEach { (k, v) -> v.forEach { a -> v.forEach { b ->
+            if (a == b) return@forEach
+            val dx = b.first - a.first
+            val dy = b.second - a.second
+            val a1 = Pair(a.first - dx, a.second - dy)
+            val a2 = Pair(b.first + dx, b.second + dy)
+            if (a1.first in map[0].indices && a1.second in map.indices) antinodes.add(a1)
+            if (a2.first in map[0].indices && a2.second in map.indices) antinodes.add(a2)
+        } } }
+
+        map.toMatrix().also { mat -> antinodes.forEach { (x, y) -> mat[y][x] = 'X' } }.printBoxed()
+
+        assertEquals("Day 8.1", 323, antinodes.size)
+
+        val resonants = mutableSetOf<Pair<Int, Int>>()
+        antennas.forEach { (k, v) -> v.forEach { a -> v.forEach { b ->
+            if (a == b) return@forEach
+            val dx = b.first - a.first
+            val dy = b.second - a.second
+            var a1 = a
+            while (a1.first in map[0].indices && a1.second in map.indices) {
+                resonants.add(a1)
+                a1 = Pair(a1.first + dx, a1.second + dy)
+            }
+            var a2 = b
+            while (a2.first in map[0].indices && a2.second in map.indices) {
+                resonants.add(a2)
+                a2 = Pair(a2.first - dx, a2.second - dy)
+            }
+        } } }
+
+        map.toMatrix().also { mat -> resonants.forEach { (x, y) -> mat[y][x] = 'X' } }.printBoxed()
+
+        assertEquals("Day 8.2", 0, resonants.size)
+    }
 }
