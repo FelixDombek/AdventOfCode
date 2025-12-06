@@ -168,4 +168,32 @@ class AdventOfCode2025 : AdventBase(2025) {
         val totalFresh = mutableRanges.sumOf { it.last - it.first + 1 }
         assertEquals("Day 5.2", if (isExample) 14 else 355555479253787, totalFresh)
     }
+
+    @Test
+    fun `day 6, trash compactor`() {
+        val inputRaw = getInput(6)
+        val longestLineLen = inputRaw.maxOf { it.length }
+        val input = inputRaw.map { it.padEnd(longestLineLen, ' ') }
+        val problems = input.map { it.trim().split(Regex("\\s+")) }.transposed()
+        val sum = problems.sumOf {
+            val nums = it.dropLast(1).map { it.toLong() }
+            nums.reduce { acc, num -> if (it.last().single() == '*') acc * num else acc + num }
+        }
+        assertEquals("Day 6.1", if (isExample) 4277556 else 5524274308182, sum)
+
+        val problems2 = input.transposed()
+        val group = mutableListOf<Long>()
+        var op = '+'
+        var sum2 = 0L
+        fun solveGroup() = group.reduce { acc, num -> if (op == '*') acc * num else acc + num }.also { group.clear() }
+        for (num in problems2) {
+            if (num.matches(Regex("\\s+"))) { sum2 += solveGroup() ; continue }
+            if (num.endsWith("*") || num.endsWith("+")) op = num.last()
+            group += num.filter { it.isDigit() }.toLong()
+        }
+        sum2 += solveGroup()
+        assertEquals("Day 6.2", if (isExample) 3263827 else 8843673199391, sum2)
+    }
+
+
 }
