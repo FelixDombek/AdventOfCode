@@ -132,10 +132,10 @@ class AdventOfCode2023 : AdventBase(2023) {
 
     @Test
     fun day5() {
-        val input = getString(5).split("\n\n")
-        val seeds = input[0].split(" ").drop(1).map { it.toLong() }
+        val input = getBlocks(5)
+        val seeds = input[0].single().split(" ").drop(1).map { it.toLong() }
         val maps = input.drop(1).map { mapBlock ->
-            mapBlock.split("\n").drop(1).map { mapLine ->
+            mapBlock.drop(1).map { mapLine ->
                 val (to, from, len) = mapLine.split(" ").map { it.toLong() }
                 from..<(from + len) to (to - from)
             }
@@ -237,7 +237,7 @@ class AdventOfCode2023 : AdventBase(2023) {
 
     @Test
     fun day8() {
-        val (ops, graph) = getString(8).split("\n\n").map { it.lines() }.let { (ops, graph) ->
+        val (ops, graph) = getBlocks(8).let { (ops, graph) ->
             ops[0].map { if (it == 'L') 0 else 1 } to graph.map {
                 Regex("\\w+").findAll(it).map { it.value }.toList()
             }.associate { (n, l, r) -> n to listOf(l, r) }
@@ -448,7 +448,7 @@ class AdventOfCode2023 : AdventBase(2023) {
 
     @Test
     fun day13() {
-        val fields = getString(13).split("\n\n").map { it.lines() }
+        val fields = getBlocks(13)
 
         fun isSymmetric(f: List<String>, i: Int, errors: Int) =
             f.take(i).reversed().zip(f.drop(i)).sumOf { (l, r) -> l.zip(r).count { (l, r) -> l != r } } == errors
@@ -651,7 +651,7 @@ class AdventOfCode2023 : AdventBase(2023) {
 
     @Test
     fun day19() {
-        val (workflowIn, partIn) = getString(19).split("\n\n").map { it.lines() }
+        val (workflowIn, partIn) = getBlocks(19)
         data class Rule(val action: String, val cat: Char?, val comp: Char?, val value: Int) {
             fun match(part: Map<Char, Int>) = cat == null || part[cat]!!.let { if (comp == '<') it < value else it > value }
         }

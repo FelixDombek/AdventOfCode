@@ -13,8 +13,8 @@ class AdventOfCode2022 : AdventBase(2022) {
 
     @Test
     fun day1() {
-        val input = getString(1)
-        val sums = input.split("\n\n").map { it.lines().sumOf { it.toInt() } }
+        val input = getBlocks(1)
+        val sums = input.map { it.sumOf { it.toInt() } }
         assertEquals("2022.1.1", 71934, sums.max())
 
         // complexity O(n + k log k)
@@ -79,7 +79,7 @@ class AdventOfCode2022 : AdventBase(2022) {
 
     @Test
     fun day5() {
-        val (crates, ops) = getString(5).split("\n\n").map { it.lines() }
+        val (crates, ops) = getBlocks(5)
         fun createStacks() = with (mutableMapOf<Int, MutableList<Char>>()) {
             crates.last().filter { it.isDigit() }.forEach { this[it.digitToInt()] = mutableListOf() }
             crates.reversed().drop(1).forEach {

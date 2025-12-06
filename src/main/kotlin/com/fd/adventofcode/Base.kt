@@ -11,7 +11,9 @@ open class AdventBase(private val year: Int) {
     }
     fun getInput(day: Int): List<String> = getFile(day).readLines()
 
-    fun getString(day: Int): String = getFile(day).readText()
+    fun getString(day: Int): String = getFile(day).readText().replace("\r\n", "\n")
+
+    fun getBlocks(day: Int): List<List<String>> = getString(day).split("\n\n").map { it.lines() }
 
     var day: Int = 0
     val isExample: Boolean get() = day > 1000

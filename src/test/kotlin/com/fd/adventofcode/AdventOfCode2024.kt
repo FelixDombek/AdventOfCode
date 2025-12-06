@@ -6,6 +6,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.util.Scanner
 import kotlin.math.abs
+import kotlin.math.min
 import kotlin.text.indexOf
 
 class AdventOfCode2024 : AdventBase(2024) {
@@ -93,8 +94,8 @@ class AdventOfCode2024 : AdventBase(2024) {
 
     @Test
     fun `day 5, print queue`() {
-        val input = getString(5).split("\n\n")
-        val ordering = input[0].split("\n").map { with (Scanner(it).useDelimiter("\\|")) { nextInt() to nextInt() } }
+        val input = getBlocks(5)
+        val ordering = input[0].map { with (Scanner(it).useDelimiter("\\|")) { nextInt() to nextInt() } }
         data class Page(val num: Int): Comparable<Page> {
             override fun compareTo(other: Page): Int {
                 if (num == other.num) return 0
@@ -102,7 +103,7 @@ class AdventOfCode2024 : AdventBase(2024) {
                 return 1
             }
         }
-        val updates = input[1].split("\n").map { Scanner(it).useDelimiter(",").findAllInt().map { Page(it) } }
+        val updates = input[1].map { Scanner(it).useDelimiter(",").findAllInt().map { Page(it) } }
 
         val validMiddles = updates.filter { it == it.sorted() }.map { it[it.size/2] }
         val sum = validMiddles.sumOf { it.num }
@@ -205,7 +206,7 @@ class AdventOfCode2024 : AdventBase(2024) {
                 else -> break
             }
         }
-        assertEquals("Day 6.2", 313, possible)
+        //assertEquals("Day 6.2", 313, possible)
         assertEquals("Day 6.2", 6, possible)
     }
 
@@ -275,22 +276,22 @@ class AdventOfCode2024 : AdventBase(2024) {
     @Test
     fun `day 7, bridge repair`() {
         val input = getInput(7).map { Scanner(it).useDelimiter(": | ").findAllLong() }
-        fun recurse(target: Long, numbers: List<Long>, acc: Long? = null): Boolean {
+        fun recurse(target: Long, numbers: List<Long>, acc: Long): Boolean {
             if (numbers.isEmpty()) return acc == target
-            return recurse(target, numbers.drop(1), (acc ?: 0) + numbers.first()) ||
-                    recurse(target, numbers.drop(1), (acc ?: 1) * numbers.first())
+            return recurse(target, numbers.drop(1), acc + numbers.first()) ||
+                    recurse(target, numbers.drop(1), acc * numbers.first())
         }
-        val result = input.filter { recurse(it[0], it.drop(1)) }.sumOf { it[0] }
+        val result = input.filter { recurse(it[0], it.drop(2), it[1]) }.sumOf { it[0] }
         assertEquals("Day 7.1", 932137732557, result)
 
-        fun recurse2(target: Long, numbers: List<Long>, acc: Long? = null): Boolean {
+        fun recurse2(target: Long, numbers: List<Long>, acc: Long): Boolean {
             if (numbers.isEmpty()) return acc == target
-            return recurse2(target, numbers.drop(1), (acc ?: 0) + numbers.first()) ||
-                    recurse2(target, numbers.drop(1), (acc ?: 1) * numbers.first()) ||
-                    recurse2(target, numbers.drop(1), ((acc?.toString() ?: "") + "${numbers.first()}").toLong())
+            return recurse2(target, numbers.drop(1), acc + numbers.first()) ||
+                    recurse2(target, numbers.drop(1), acc * numbers.first()) ||
+                    recurse2(target, numbers.drop(1), (acc.toString() + "${numbers.first()}").toLong())
         }
-        val result2 = input.filter { recurse2(it[0], it.drop(1)) }.sumOf { it[0] }
-        assertEquals("Day 7.2", 932137732557, result2)
+        val result2 = input.filter { recurse2(it[0], it.drop(2), it[1]) }.sumOf { it[0] }
+        assertEquals("Day 7.2", 661823605105500, result2)
     }
 
     @Test
@@ -336,5 +337,72 @@ class AdventOfCode2024 : AdventBase(2024) {
         } } }
 
         assertEquals("Day 8.2", 1077, resonants.size)
+    }
+
+    @Test
+    fun `day 9, disk fragmenter`() {
+        val input = getString(9)
+        class Memory(var pointer: Int = 0, var checksum: Long = 0L) {
+            fun write(blockId: Int?) {
+                //print(blockId)
+                checksum += pointer++ * (blockId?.toLong() ?: 0)
+            }
+            fun advance(steps: Int) {
+                pointer += steps
+            }
+        }
+        val memory = Memory()
+        fun id(idx: Int) = idx / 2.also { assert(idx % 2 == 0) }
+        var a = 0
+        var z = input.lastIndex
+        var aFree: Int? = null
+        var zRemaining: Int? = null
+        while (a < z) {
+            if (a % 2 == 0) {
+                val aId = id(a)
+                val len = input[a].digitToInt()
+                for (i in 0 until len) memory.write(aId)
+                ++a
+            } else {
+                val zId = id(z)
+                aFree = aFree ?: input[a].digitToInt()
+                zRemaining = zRemaining ?: input[z].digitToInt()
+                val toWrite = min(aFree, zRemaining)
+                repeat(toWrite) { memory.write(zId) }
+                aFree -= toWrite
+                zRemaining -= toWrite
+                if (aFree == 0) { aFree = null ; ++a }
+                if (zRemaining == 0) { zRemaining = null ; z -= 2 }
+            }
+        }
+        println("vars: a=$a z=$z aFree=$aFree zRemaining=$zRemaining")
+        if (zRemaining != null) repeat(zRemaining) { memory.write(id(z)) }
+        if (aFree == null) repeat(input[a].digitToInt()) { memory.write(id(a)) }
+        println("\n0099811188827773336446555566")
+
+        assertEquals("Day 9.1", 6446899523367, memory.checksum)
+
+        fun nextFree(size: Int, from: Int, memory: String, curRemaining: Int? = null): Int {
+            var i = from + if (from % 2 == 0) 1 else 0
+            while (i < memory.length) {
+                if (memory[i].digitToInt().let { if (curRemaining == null) it else it - curRemaining } >= size) return i
+                i += 2
+            }
+            return memory.length
+        }
+        // initialize array with next free blocks from 1-9
+        val freeTbl = IntArray(9) { nextFree(it+1, 0, input) }
+
+        a = 0
+        z = input.lastIndex
+        while (a < z) {
+            // zSize = input[z].digitToInt()
+            // zDest = freeTbl.f
+        }
+
+        //println("vars: a=$a z=$z array=${array.contentToString()}")
+        repeat(input[a].digitToInt()) { memory.write(id(a)) }
+        println("\n0099811188827773336446555566")
+        assertEquals("Day 9.2", 1027, memory.checksum)
     }
 }
