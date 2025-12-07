@@ -6,7 +6,7 @@ import java.util.Scanner
 
 class AdventOfCode2015 : AdventBase(2015) {
     @Test
-    fun day1() {
+    fun `day 1, not quite lisp`() {
         val input = getString(1)
         val floor = input.count { it == '(' } - input.count { it == ')' }
         assertEquals("Day 1.1", 74, floor)
@@ -17,7 +17,7 @@ class AdventOfCode2015 : AdventBase(2015) {
     }
 
     @Test
-    fun day2() {
+    fun `day 2, i was told there would be no math`() {
         val input = getInput(2).map { Scanner(it).useDelimiter("x").findAllInt().sorted() }
         val paper = input.sumOf { (a, b, c) -> 3*a*b + 2*a*c + 2*b*c }
         assertEquals("Day 2.1", 1606483, paper)
@@ -27,7 +27,7 @@ class AdventOfCode2015 : AdventBase(2015) {
     }
 
     @Test
-    fun day3() {
+    fun `day 3, perfectly spherical houses in a vacuum`() {
         val input = getString(3)
         var visited = mutableSetOf(0 to 0)
         fun update(pos: Pair<Int, Int>, c: Char) =
@@ -41,7 +41,7 @@ class AdventOfCode2015 : AdventBase(2015) {
     }
 
     @Test
-    fun day4() {
+    fun `day 4, the ideal stocking stuffer`() {
         val input = "ckczppom"
         val five0 = iota().first { md5("$input$it").toHex().startsWith("00000") }
         assertEquals("Day 4.1", 117946, five0)
@@ -51,7 +51,7 @@ class AdventOfCode2015 : AdventBase(2015) {
     }
 
     @Test
-    fun day5() {
+    fun `day 5, doesn't he have intern-elves for this`() {
         val input = getInput(5)
         val vowels = Regex("[aeiou].*[aeiou].*[aeiou]")
         val pair = Regex("(.)\\1")
@@ -66,7 +66,7 @@ class AdventOfCode2015 : AdventBase(2015) {
     }
 
     @Test
-    fun day6() {
+    fun `day 6, probably a fire-hazard`() {
         val ops = getInput(6).map { it.replace("turn ", "turn") }.map { with (Scanner(it).useDelimiter("[ ,]")) {
             Triple(next(), nextInt() to nextInt(), skip(" through").nextInt() to nextInt())
         } }
@@ -92,7 +92,7 @@ class AdventOfCode2015 : AdventBase(2015) {
     }
 
     @Test
-    fun day7() {
+    fun `day 7, some assembly required`() {
         data class Op(val num: UShort? = null, val id: String? = null,
                       val lhsNum: UShort? = null, val lhsId: String? = null,
                       val op: String? = null,
@@ -143,7 +143,7 @@ class AdventOfCode2015 : AdventBase(2015) {
     }
 
     @Test
-    fun day8() {
+    fun `day 8, matchsticks`() {
         val input = getInput(8)
         val codeLen = input.sumOf { it.length }
         val inMem = input.sumOf {

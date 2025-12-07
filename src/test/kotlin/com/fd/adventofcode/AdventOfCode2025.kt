@@ -23,7 +23,6 @@ class AdventOfCode2025 : AdventBase(2025) {
             val newPos = tmpPos + steps
             val vis = newPos / numPos
             visited0 += vis
-            // println("At $pos. $dir $steps (from $tmpPos) -> $vis")
             pos = (if (dir == 'L') numPos - (newPos % numPos) else newPos % numPos) % numPos
         }
         assertEquals("Day 1.2", if (isExample) 6 else 5937, visited0)
@@ -32,58 +31,21 @@ class AdventOfCode2025 : AdventBase(2025) {
     @Test
     fun `day 2, gift shop`() {
         val input = getString(2).split(",").map { it.split("-").let { it[0].toLong()..it[1].toLong() } }
-        var invalid = 0L
-        for (r in input) {
-            for (id in r) {
-                val idStr = id.toString()
-                if (idStr.length % 2 != 0) continue
-                val first = idStr.take(idStr.length / 2)
-                val second = idStr.substring(idStr.length / 2)
-                if (first == second) invalid += id
-            }
-        }
-        assertEquals("Day 2.1", if (isExample) 1 else 23534117921, invalid)
+        fun sumInvalid(re: Regex) = input.sumOf { it.filter { id -> re.matches("$id") }.sum() }
+        val sum1 = sumInvalid(Regex("(\\d+)\\1"))
+        assertEquals("Day 2.1", if (isExample) 1 else 23534117921, sum1)
 
-        invalid = 0
-        val invalidRegex = Regex("(\\d+)\\1+")
-        for (r in input) {
-            for (id in r) {
-                val idStr = id.toString()
-                if (invalidRegex.matches(idStr)) invalid += id
-            }
-        }
-        assertEquals("Day 2.2", if (isExample) 1 else 31755323497, invalid)
+        val sum2 = sumInvalid(Regex("(\\d+)\\1+"))
+        assertEquals("Day 2.2", if (isExample) 1 else 31755323497, sum2)
     }
 
     @Test
     fun `day 3, lobby`() {
         val input = getInput(3)
-        var totalJoltage = 0L
-        for (bank in input) {
-            var highest = 0
-            var highestIndex = 0
-            bank.dropLast(1).forEachIndexed { i, c ->
-                val ci = "$c".toInt()
-                if (ci > highest) {
-                    highest = ci
-                    highestIndex = i
-                }
-            }
-            var highest2 = 0
-            for (i in (highestIndex + 1)..bank.indices.last) {
-                val ci = "${bank[i]}".toInt()
-                if (ci > highest2) highest2 = ci
-            }
-            val joltage = "$highest$highest2".toInt()
-            totalJoltage += joltage
-        }
-        assertEquals("Day 3.1", if (isExample) 357 else 16887, totalJoltage)
-
-        totalJoltage = 0
-        for (bank in input) {
+        fun sumJoltage(numDigits: Int) = input.sumOf { bank ->
             var joltage = 0L
             var startIndex = 0
-            for (digit in 12 downTo 1) {
+            for (digit in numDigits downTo 1) {
                 var highest = "${bank[startIndex]}".toInt()
                 var highestIndex = startIndex
                 for (i in (startIndex + 1)..(bank.length - digit)) {
@@ -96,14 +58,18 @@ class AdventOfCode2025 : AdventBase(2025) {
                 joltage = joltage * 10L + highest
                 startIndex = highestIndex + 1
             }
-            totalJoltage += joltage
+            joltage
         }
-        assertEquals("Day 3.2", if (isExample) 3121910778619 else 167302518850275, totalJoltage)
+
+        val sum1 = sumJoltage(2)
+        assertEquals("Day 3.1", if (isExample) 357 else 16887, sum1)
+        val sum2 = sumJoltage(12)
+        assertEquals("Day 3.2", if (isExample) 3121910778619 else 167302518850275, sum2)
     }
 
     @Test
     fun `day 4, printing department`() {
-        val map = getInput(4).map { it.toMutableList() }
+        val map = getInput(4).toMatrix()
         fun countAdj(x: Int, y: Int): Int {
             var count = 0
             for (i in -1..1) {
