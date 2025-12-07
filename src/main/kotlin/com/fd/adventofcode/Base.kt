@@ -15,6 +15,8 @@ open class AdventBase(private val year: Int) {
 
     fun getBlocks(day: Int): List<List<String>> = getString(day).split("\n\n").map { it.lines() }
 
+    fun getMatrix(day: Int): List<MutableList<Char>> = getString(day).split("\n").map { it.toMutableList() }
+
     var day: Int = 0
     val isExample: Boolean get() = day > 1000
 }

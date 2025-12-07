@@ -188,12 +188,46 @@ class AdventOfCode2025 : AdventBase(2025) {
         fun solveGroup() = group.reduce { acc, num -> if (op == '*') acc * num else acc + num }.also { group.clear() }
         for (num in problems2) {
             if (num.matches(Regex("\\s+"))) { sum2 += solveGroup() ; continue }
-            if (num.endsWith("*") || num.endsWith("+")) op = num.last()
+            if (num.endsWith ("*") || num.endsWith("+")) op = num.last()
             group += num.filter { it.isDigit() }.toLong()
         }
         sum2 += solveGroup()
         assertEquals("Day 6.2", if (isExample) 3263827 else 8843673199391, sum2)
     }
 
+    @Test
+    fun `day 7, laboratories`() {
+        val input = getInput(7)
+        val mat = input.toMatrix()
+        var splits = 0
+        mat.zipWithNext { a, b ->
+            for (i in a.indices) {
+                when {
+                    a[i] == 'S' -> b[i] = '|'
+                    a[i] == '|' && b[i] != '^' -> b[i] = '|'
+                    a[i] == '|' && b[i] == '^' -> { b[i-1] = '|' ; b[i+1] = '|' ; ++splits }
+                }
+            }
+        }
+        assertEquals("Day 7.1", if (isExample) 21 else 1562, splits)
 
+        val mat2 = input.toMatrix()
+        val counts = List(mat2.size) { MutableList(mat2[0].size) { 0L } }
+        var col = 0
+        mat2.zipWithNext { a, b ->
+            ++col
+            for (i in a.indices) {
+                when {
+                    a[i] == 'S' -> { b[i] = '|' ; counts[col][i] = 1 }
+                    a[i] == '|' && b[i] != '^' -> { b[i] = '|' ; counts[col][i] += counts[col-1][i] }
+                    a[i] == '|' && b[i] == '^' -> {
+                        b[i-1] = '|' ; counts[col][i-1] += counts[col-1][i]
+                        b[i+1] = '|' ; counts[col][i+1] += counts[col-1][i]
+                    }
+                }
+            }
+        }
+        val total = counts.last().sum()
+        assertEquals("Day 7.2", if (isExample) 40 else 24292631346665, total)
+    }
 }
